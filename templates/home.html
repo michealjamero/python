@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoodTune - Music for Every Emotion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Additional styles can remain here if needed */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background: linear-gradient(135deg,#1C1B4D, #B80E65, #179181);
+            color: white;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px 0;
+            z-index: 1000;
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .logo {
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .logo span {
+            color: #d466ff; 
+        }
+        
+        nav ul {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 10px;
+            transition: 0.3s;
+        }
+        
+        nav ul li a:hover {
+            color: #4ecdc4;
+        }
+
+        .artist-profile {
+            padding: 100px 24px 24px;
+            background: linear-gradient(to bottom, rgba(83, 83, 83, 0.7), rgba(18, 18, 18, 0.7));
+            text-align: left;
+        }
+
+        .artist-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .artist-image {
+            width: 232px;
+            height: 232px;
+            object-fit: cover;
+            border-radius: 50%;
+            box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .artist-info {
+            flex: 1;
+        }
+
+        .artist-name {
+            font-size: 6em;
+            margin: 0;
+            font-weight: bold;
+            letter-spacing: -0.04em;
+        }
+
+        .monthly-listeners {
+            color: #b3b3b3;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+
+        .artist-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .follow-button {
+            background: transparent;
+            color: white;
+            border: 1px solid #727272;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .follow-button:hover {
+            background: #d466ff; 
+            color: white;
+        }
+
+        .more-button {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .more-button:hover {
+            background: #d466ff; 
+            color: white;
+        }
+
+        .shuffle-button {
+            background: #1ed760;
+            color: black;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: auto;
+            font-size: 1.5em;
+        }
+
+        .popular-tracks {
+            padding: 24px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .popular-tracks h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+        }
+
+        .track-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+            background-color: rgba(20, 20, 20, 0.5);
+        }
+
+        .track-item:hover {
+            background-color: rgba(40, 40, 40, 0.7);
+            transform: translateY(-3px);
+        }
+        
+        
+
+        .track-number {
+            width: 24px;
+            color: #b3b3b3;
+            text-align: right;
+            margin-right: 16px;
+        }
+
+        .track-image {
+            width: 40px;
+            height: 40px;
+            margin-right: 16px;
+            border-radius: 4px;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-title {
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .track-plays {
+            color: #b3b3b3;
+            font-size: 0.9em;
+        }
+
+        .verified-icon {
+            color: #1ed760;
+            margin-left: 8px;
+            font-size: 1.2em;
+        }
+
+        .more-options {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            margin-left: 16px;
+            font-size: 1.2em;
+        }
+
+        
+        .mood-selection {
+            padding: 40px 24px;
+            background: rgba(24, 24, 24, 0.7);
+            margin: 30px 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .mood-selection h2 {
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            text-align: left;
+        }
+
+        .mood-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .mood-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+        
+        .mood-item:hover {
+            transform: translateY(-10px);
+        }
+
+        .hero-image {
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            transition: transform 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-image:hover {
+            transform: scale(1.05);
+        }
+
+        .caption {
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 500px;
+            padding: 8px 24px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        .Play {
+            background: #d466ff; 
+            color: white;
+        }
+        .anger {
+            background: #ff3b30; 
+            color: white;
+        }
+
+        .relaxed {
+            background: gray; 
+            color: white;
+        }
+
+        .happy {
+            background: #ffcc00; 
+            color: rgb(255, 255, 255);
+        }
+
+        .sad {
+            background: #007aff; 
+            color: white;
+        }
+
+        .love {
+            background: #ff2d55; 
+            color: white;
+        }
+
+        button {
+            outline: none;
+            cursor: pointer;
+            border: none;
+            padding: 0.9rem 2rem;
+            margin: 0;
+            font-family: inherit;
+            font-size: inherit;
+            position: relative;
+            display: inline-block;
+            letter-spacing: 0.05rem;
+            font-weight: 700;
+            font-size: 17px;
+            border-radius: 500px;
+            overflow: hidden;
+            background: #d466ff;
+            color: ghostwhite;
+        }
+
+        button span {
+            position: relative;
+            z-index: 10;
+            transition: color 0.4s;
+        }
+
+        button:hover span {
+            color: black;
+        }
+
+        button::before,
+        button::after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        button::before {
+            content: "";
+            background: #000;
+            width: 120%;
+            left: -10%;
+            transform: skew(30deg);
+            transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
+        }
+
+        button:hover::before {
+            transform: translate3d(100%, 0, 0);
+        }
+        
+        .music-container {
+            margin: 50px auto;
+            max-width: 800px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+        
+        .music-container h2 {
+            margin-bottom: 20px;
+        }
+        
+        audio {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 30px;
+        }
+        
+        .footer {
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ccc;
+            margin-top: 5px;
+        }
+        
+        .neon-text {
+            color: #5f6df1;
+            text-shadow: 0 0 5px #4a58db, 0 0 10px #604adb, 0 0 20px#894adb, 0 0 30px #a64adb, 0 0 40px #ff00ff, 0 0 50px #ff00ff, 0 0 75px #ff00ff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ✅ Navigation Bar -->
+    <header>
+        <div class="nav-container">
+            <div class="logo">Mood<span>Tune</span></div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Home</a></li>
+                    <li><a href="{{ url_for('library') }}">Library</a></li>
+                    <li><a href="{{ url_for('about') }}">About</a></li>
+                    <li><a href="{{ url_for('profile') }}">Profile</a></li>
+                    <li><a href="{{ url_for('signin') }}">Sign-in</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ✅ Artist Profile -->
+    <section class="artist-profile">
+        <div class="artist-header">
+            <img src="{{ url_for('static', filename='Untitled design (1).png') }}" alt="Artist Profile" class="artist-image">
+            <div class="artist-info">
+                <h1 class="artist-name">Your Music</h1>
+            </div>
+        </div>
+    </section>
+
+    <!-- ✅ Popular Tracks -->
+    <section class="popular-tracks">
+        <h2>Popular</h2>
+        <div class="track-list">
+
+            <div class="track-item">
+                <span class="track-number">1</span>
+                <img src="{{ url_for('static', filename='RIO ROMO - NOTHING\'S NEW.jpg') }}" alt="Track Image" class="track-image">
+                <div class="track-info">
+                    <div class="track-title">RIO ROMO - NOTHING'S NEW <span class="verified-icon">✓</span></div>
+                    <div class="track-plays">Sad • 3:28</div>
+                </div>
+                <button class="sad caption" onclick="window.location.href='{{ url_for('library') }}#sad-section'"><span>Sad</span></button>
+            </div>
+
+            <div class="track-item">
+                <span class="track-number">2</span>
+                <img src="{{ url_for('static', filename='Shawn Mendes, Camilia Cbello - Senorita.jpg') }}" alt="Track Image" class="track-image">
+                <div class="track-info">
+                    <div class="track-title">Shawn Mendes, Camilia Cbello - Senorita <span class="verified-icon">✓</span></div>
+                    <div class="track-plays">Love • 3:11</div>
+                </div>
+                <button class="love caption" onclick="window.location.href='{{ url_for('library') }}#love-section'"><span>Love</span></button>
+            </div>
+
+            <div class="track-item">
+                <span class="track-number">3</span>
+                <img src="{{ url_for('static', filename='Vancouver Sleep Clinic - somone to stay.jpg') }}" alt="Track Image" class="track-image">
+                <div class="track-info">
+                    <div class="track-title">Vancouver Sleep Clinic - someone to stay <span class="verified-icon">✓</span></div>
+                    <div class="track-plays">Sad • 4:14</div>
+                </div>
+                <button class="sad caption" onclick="window.location.href='{{ url_for('library') }}#sad-section'"><span>Sad</span></button>
+            </div>
+
+            <div class="track-item">
+                <span class="track-number">4</span>
+                <img src="{{ url_for('static', filename='Lana Del Rey - Say Yes To Heaven.jpg') }}" alt="Track Image" class="track-image">
+                <div class="track-info">
+                    <div class="track-title">Lana Del Rey - Say Yes To Heaven <span class="verified-icon">✓</span></div>
+                    <div class="track-plays">Relaxed • 3:29</div>
+                </div>
+                <button class="relaxed caption" onclick="window.location.href='{{ url_for('library') }}#relaxed-section'"><span>Relaxed</span></button>
+            </div>
+
+            <div class="track-item">
+                <span class="track-number">5</span>
+                <img src="{{ url_for('static', filename='Surfaces - Sheesh!.jpg') }}" alt="Track Image" class="track-image">
+                <div class="track-info">
+                    <div class="track-title">Surfaces - Sheesh! <span class="verified-icon">✓</span></div>
+                    <div class="track-plays">Happy • 2:28</div>
+                </div>
+                <button class="happy caption" onclick="window.location.href='{{ url_for('library') }}#happy-section'"><span>Happy</span></button>
+            </div>
+
+            <div class="track-item">
+                <span class="track-number">6</span>
+                <img src="{{ url_for('static', filename='Lizzo - Thuth Hurts.jpg') }}" alt="Track Image" class="track-image">
+                <div class="track-info">
+                    <div class="track-title">Lizzo - Thuth Hurts <span class="verified-icon">✓</span></div>
+                    <div class="track-plays">Anger • 2:53</div>
+                </div>
+                <button class="anger caption" onclick="window.location.href='{{ url_for('library') }}#anger-section'"><span>Anger</span></button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ✅ Mood Selection -->
+    <section class="mood-selection">
+        <h2>Choose Your Mood</h2>
+        <div class="mood-container">
+            <div class="mood-item">
+                <img class="hero-image" src="{{ url_for('static', filename='cc91ed4ddd4a7394e91c8d1e76af308b.jpg') }}" alt="Happy Music">
+                <button class="happy caption" onclick="window.location.href='{{ url_for('library') }}#happy-section'"><span>Happy</span></button>
+            </div>
+            <div class="mood-item">
+                <img class="hero-image" src="{{ url_for('static', filename='de18fedc3a18ae111943cf36fdc8967a.jpg') }}" alt="Relaxing Music">
+                <button class="relaxed caption" onclick="window.location.href='{{ url_for('library') }}#relaxed-section'"><span>Relaxed</span></button>
+            </div>
+            <div class="mood-item">
+                <img class="hero-image" src="{{ url_for('static', filename='e63565dc2d6b82b162e3a17329614181.jpg') }}" alt="Love Music">
+                <button class="love caption" onclick="window.location.href='{{ url_for('library') }}#love-section'"><span>Love</span></button>
+            </div>
+            <div class="mood-item">
+                <img class="hero-image" src="{{ url_for('static', filename='1891b3fd114cdf8f93af4633958ed49c.jpg') }}" alt="Sad Music">
+                <button class="sad caption" onclick="window.location.href='{{ url_for('library') }}#sad-section'"><span>Sad</span></button>
+            </div>
+            <div class="mood-item">
+                <img class="hero-image" src="{{ url_for('static', filename='4000059775ba77e492ce3ae907e825cd.jpg') }}" alt="Anger Music">
+                <button class="anger caption" onclick="window.location.href='{{ url_for('library') }}#anger-section'"><span>Anger</span></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ✅ Recently Played -->
+    <section class="recently-played" style="padding: 40px 24px; background: rgba(24, 24, 24, 0.7); margin: 30px 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);">
+        <h2 style="margin-bottom: 30px; font-size: 1.8em; text-align: left;">Recently Played</h2>
+        <div style="max-height: 600px; overflow-y: auto; padding-right: 10px; scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #d466ff rgba(0,0,0,0.2);">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                {% for track in recently_played %}
+                <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    <img src="{{ url_for('static', filename=track['album_cover']) }}" alt="Album Cover" style="border-radius:5px;width:100%;height:150px;object-fit:cover;margin:auto;margin-bottom:10px;">
+                    <div style="text-align:left;">
+                        <h3 style="font-size:14px;color:white;margin:0;">{{ track['artist'] }} - {{ track['song_title'] }}</h3>
+                        <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">{{ track['mood'] if track['mood'] is defined else 'Mixed' }} • {{ track['duration'] if track['duration'] is defined else '3:30' }}</p>
+                        <audio controls style="width:100%;height:30px;">
+                            <source src="{{ url_for('static', filename=track['audio_file']) }}" type="audio/mpeg">
+                        </audio>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ✅ About Section -->
+    <section class="about-section" style="padding: 40px 24px; background: rgba(24, 24, 24, 0.7); margin: 30px 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);">
+        <h2 style="margin-bottom: 30px; font-size: 1.8em; text-align: left;">About MoodTune</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 30px; align-items: center;">
+            <div style="flex: 1; min-width: 300px; text-align: left;">
+                <p>MoodTune is your personal music companion that adapts to your emotions.</p>
+                <p>Our advanced algorithm analyzes your listening habits and mood preferences to create a tailored music experience.</p>
+                <a href="{{ url_for('about') }}"><button class="cta-button" style="margin-top: 30px;"><span>Learn More</span></button></a>
+            </div>
+            <div style="flex: 1; min-width: 300px;">
+                <img src="{{ url_for('static', filename='cc91ed4ddd4a7394e91c8d1e76af308b.jpg') }}" alt="About MoodTune" style="width: 100%; max-width: 400px; border-radius: 10px;">
+            </div>
+        </div>
+    </section>
+
+    <!-- ✅ Newsletter -->
+    <section class="newsletter" style="padding: 40px 24px; background: rgba(24, 24, 24, 0.7); margin: 30px 20px; border-radius: 10px;">
+        <h2 style="margin-bottom: 20px; font-size: 1.8em;">Stay Updated</h2>
+        <p style="margin-bottom: 30px;">Subscribe to our newsletter for the latest music recommendations and features.</p>
+        <div style="display: flex; max-width: 500px; margin: 0 auto; gap: 10px;">
+            <a href="{{ url_for('signin') }}" style="text-decoration: none; width: 100%;">
+                <button style="width: 100%; margin-top: 10px; background: #d466ff; color: white; font-weight: bold;"><span>Subscribe</span></button>
+            </a>
+        </div>
+    </section>
+
+    <!-- ✅ Footer -->
+    <footer class="footer">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; max-width: 1200px; margin: 0 auto; padding: 20px;">
+            <div style="flex: 1; min-width: 200px; text-align: left; margin-bottom: 20px;">
+                <h3 class="logo" style="margin-bottom: 15px;">Mood<span>Tune</span></h3>
+                <p>Music for every emotion</p>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <a href="#" style="color: white; font-size: 1.2em;">📱</a>
+                    <a href="#" style="color: white; font-size: 1.2em;">📘</a>
+                    <a href="#" style="color: white; font-size: 1.2em;">📸</a>
+                    <a href="#" style="color: white; font-size: 1.2em;">🐦</a>
+                </div>
+            </div>
+            <div style="flex: 1; min-width: 200px; text-align: left; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px;">Company</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 10px;"><a href="#" style="color: #b3b3b3; text-decoration: none;">About</a></li>
+                    <li style="margin-bottom: 10px;"><a href="#" style="color: #b3b3b3; text-decoration: none;">Jobs</a></li>
+                    <li style="margin-bottom: 10px;"><a href="#" style="color: #b3b3b3; text-decoration: none;">For the Record</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+</body>

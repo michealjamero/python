@@ -1,0 +1,1912 @@
+/* about page */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background: linear-gradient(135deg,#1C1B4D, #B80E65, #179181);
+            color: white;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #d466ff;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 10px;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #4ecdc4;
+        }
+
+        .artist-profile {
+            padding: 100px 24px 24px;
+            background: linear-gradient(to bottom, rgba(83, 83, 83, 0.7), rgba(18, 18, 18, 0.7));
+            text-align: left;
+        }
+
+        .artist-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .artist-image {
+            width: 232px;
+            height: 232px;
+            object-fit: cover;
+            border-radius: 50%;
+            box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .artist-info {
+            flex: 1;
+        }
+
+        .artist-name {
+            font-size: 6em;
+            margin: 0;
+            font-weight: bold;
+            letter-spacing: -0.04em;
+        }
+
+        .monthly-listeners {
+            color: #b3b3b3;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+
+        .artist-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .follow-button {
+            background: transparent;
+            color: white;
+            border: 1px solid #727272;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .follow-button:hover {
+            background: #d466ff;
+            color: white;
+        }
+
+        .more-button {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .more-button:hover {
+            background: #d466ff;
+            color: white;
+        }
+
+        .shuffle-button {
+            background: #1ed760;
+            color: black;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: auto;
+            font-size: 1.5em;
+        }
+
+        .popular-tracks {
+            padding: 24px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .popular-tracks h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+        }
+
+        .track-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+            background-color: rgba(20, 20, 20, 0.5);
+        }
+
+        .track-item:hover {
+            background-color: rgba(40, 40, 40, 0.7);
+            transform: translateY(-3px);
+        }
+
+
+
+        .track-number {
+            width: 24px;
+            color: #b3b3b3;
+            text-align: right;
+            margin-right: 16px;
+        }
+
+        .track-image {
+            width: 40px;
+            height: 40px;
+            margin-right: 16px;
+            border-radius: 4px;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-title {
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .track-plays {
+            color: #b3b3b3;
+            font-size: 0.9em;
+        }
+
+        .verified-icon {
+            color: #1ed760;
+            margin-left: 8px;
+            font-size: 1.2em;
+        }
+
+        .more-options {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            margin-left: 16px;
+            font-size: 1.2em;
+        }
+
+
+        .mood-selection {
+            padding: 40px 24px;
+            background: rgba(24, 24, 24, 0.7);
+            margin: 30px 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .mood-selection h2 {
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            text-align: left;
+        }
+
+        .mood-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .mood-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+
+        .mood-item:hover {
+            transform: translateY(-10px);
+        }
+
+        .hero-image {
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            transition: transform 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-image:hover {
+            transform: scale(1.05);
+        }
+
+        .caption {
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 500px;
+            padding: 8px 24px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        .Play {
+            background: #d466ff;
+            color: white;
+        }
+        .anger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .relaxed {
+            background: gray;
+            color: white;
+        }
+
+        .happy {
+            background: #ffcc00;
+            color: rgb(255, 255, 255);
+        }
+
+        .sad {
+            background: #007aff;
+            color: white;
+        }
+
+        .love {
+            background: #ff2d55;
+            color: white;
+        }
+
+        button {
+            outline: none;
+            cursor: pointer;
+            border: none;
+            padding: 0.9rem 2rem;
+            margin: 0;
+            font-family: inherit;
+            font-size: inherit;
+            position: relative;
+            display: inline-block;
+            letter-spacing: 0.05rem;
+            font-weight: 700;
+            font-size: 17px;
+            border-radius: 500px;
+            overflow: hidden;
+            background: #d466ff;
+            color: ghostwhite;
+        }
+
+        button span {
+            position: relative;
+            z-index: 10;
+            transition: color 0.4s;
+        }
+
+        button:hover span {
+            color: black;
+        }
+
+        button::before,
+        button::after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        button::before {
+            content: "";
+            background: #000;
+            width: 120%;
+            left: -10%;
+            transform: skew(30deg);
+            transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
+        }
+
+        button:hover::before {
+            transform: translate3d(100%, 0, 0);
+        }
+
+        .music-container {
+            margin: 50px auto;
+            max-width: 800px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .music-container h2 {
+            margin-bottom: 20px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 30px;
+        }
+
+        .footer {
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .neon-text {
+            color: #5f6df1;
+            text-shadow: 0 0 5px #4a58db, 0 0 10px #604adb, 0 0 20px#894adb, 0 0 30px #a64adb, 0 0 40px #ff00ff, 0 0 50px #ff00ff, 0 0 75px #ff00ff;
+        }
+
+
+        /*home page*/
+                body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background: linear-gradient(135deg,#1C1B4D, #B80E65, #179181);
+            color: white;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #d466ff;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 10px;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #4ecdc4;
+        }
+
+        .artist-profile {
+            padding: 100px 24px 24px;
+            background: linear-gradient(to bottom, rgba(83, 83, 83, 0.7), rgba(18, 18, 18, 0.7));
+            text-align: left;
+        }
+
+        .artist-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .artist-image {
+            width: 232px;
+            height: 232px;
+            object-fit: cover;
+            border-radius: 50%;
+            box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .artist-info {
+            flex: 1;
+        }
+
+        .artist-name {
+            font-size: 6em;
+            margin: 0;
+            font-weight: bold;
+            letter-spacing: -0.04em;
+        }
+
+        .monthly-listeners {
+            color: #b3b3b3;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+
+        .artist-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .follow-button {
+            background: transparent;
+            color: white;
+            border: 1px solid #727272;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .follow-button:hover {
+            background: #d466ff;
+            color: white;
+        }
+
+        .more-button {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .more-button:hover {
+            background: #d466ff;
+            color: white;
+        }
+
+        .shuffle-button {
+            background: #1ed760;
+            color: black;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: auto;
+            font-size: 1.5em;
+        }
+
+        .popular-tracks {
+            padding: 24px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .popular-tracks h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+        }
+
+        .track-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+            background-color: rgba(20, 20, 20, 0.5);
+        }
+
+        .track-item:hover {
+            background-color: rgba(40, 40, 40, 0.7);
+            transform: translateY(-3px);
+        }
+
+
+
+        .track-number {
+            width: 24px;
+            color: #b3b3b3;
+            text-align: right;
+            margin-right: 16px;
+        }
+
+        .track-image {
+            width: 40px;
+            height: 40px;
+            margin-right: 16px;
+            border-radius: 4px;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-title {
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .track-plays {
+            color: #b3b3b3;
+            font-size: 0.9em;
+        }
+
+        .verified-icon {
+            color: #1ed760;
+            margin-left: 8px;
+            font-size: 1.2em;
+        }
+
+        .more-options {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            margin-left: 16px;
+            font-size: 1.2em;
+        }
+
+
+        .mood-selection {
+            padding: 40px 24px;
+            background: rgba(24, 24, 24, 0.7);
+            margin: 30px 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .mood-selection h2 {
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            text-align: left;
+        }
+
+        .mood-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .mood-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+
+        .mood-item:hover {
+            transform: translateY(-10px);
+        }
+
+        .hero-image {
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            transition: transform 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-image:hover {
+            transform: scale(1.05);
+        }
+
+        .caption {
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 500px;
+            padding: 8px 24px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        .Play {
+            background: #d466ff;
+            color: white;
+        }
+        .anger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .relaxed {
+            background: gray;
+            color: white;
+        }
+
+        .happy {
+            background: #ffcc00;
+            color: rgb(255, 255, 255);
+        }
+
+        .sad {
+            background: #007aff;
+            color: white;
+        }
+
+        .love {
+            background: #ff2d55;
+            color: white;
+        }
+
+        button {
+            outline: none;
+            cursor: pointer;
+            border: none;
+            padding: 0.9rem 2rem;
+            margin: 0;
+            font-family: inherit;
+            font-size: inherit;
+            position: relative;
+            display: inline-block;
+            letter-spacing: 0.05rem;
+            font-weight: 700;
+            font-size: 17px;
+            border-radius: 500px;
+            overflow: hidden;
+            background: #d466ff;
+            color: ghostwhite;
+        }
+
+        button span {
+            position: relative;
+            z-index: 10;
+            transition: color 0.4s;
+        }
+
+        button:hover span {
+            color: black;
+        }
+
+        button::before,
+        button::after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        button::before {
+            content: "";
+            background: #000;
+            width: 120%;
+            left: -10%;
+            transform: skew(30deg);
+            transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
+        }
+
+        button:hover::before {
+            transform: translate3d(100%, 0, 0);
+        }
+
+        .music-container {
+            margin: 50px auto;
+            max-width: 800px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .music-container h2 {
+            margin-bottom: 20px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 30px;
+        }
+
+        .footer {
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .neon-text {
+            color: #5f6df1;
+            text-shadow: 0 0 5px #4a58db, 0 0 10px #604adb, 0 0 20px#894adb, 0 0 30px #a64adb, 0 0 40px #ff00ff, 0 0 50px #ff00ff, 0 0 75px #ff00ff;
+        }
+
+        /*libary*/
+
+body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background: linear-gradient(135deg,#1C1B4D, #B80E65, #179181);
+            color: white;
+        }
+
+
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #d466ff;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 10px;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #4ecdc4;
+        }
+
+        .artist-profile {
+            padding: 100px 24px 24px;
+            background: linear-gradient(to bottom, rgba(83, 83, 83, 0.7), rgba(18, 18, 18, 0.7));
+            text-align: left;
+        }
+
+        .artist-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .artist-image {
+            width: 232px;
+            height: 232px;
+            object-fit: cover;
+            border-radius: 50%;
+            box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .artist-info {
+            flex: 1;
+        }
+
+        .artist-name {
+            font-size: 6em;
+            margin: 0;
+            font-weight: bold;
+            letter-spacing: -0.04em;
+        }
+
+        .monthly-listeners {
+            color: #b3b3b3;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+
+        .artist-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .follow-button {
+            background: transparent;
+            color: white;
+            border: 1px solid #727272;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .follow-button:hover {
+            background: #d466ff;
+            color: white;
+        }
+
+        .more-button {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .more-button:hover {
+            background: #d466ff;
+            color: white;
+        }
+
+        .shuffle-button {
+            background: #1ed760;
+            color: black;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: auto;
+            font-size: 1.5em;
+        }
+
+        .popular-tracks {
+            padding: 24px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .popular-tracks h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+        }
+
+        .track-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+            background-color: rgba(20, 20, 20, 0.5);
+        }
+
+        .track-item:hover {
+            background-color: rgba(40, 40, 40, 0.7);
+            transform: translateY(-3px);
+        }
+
+
+
+        .track-number {
+            width: 24px;
+            color: #b3b3b3;
+            text-align: right;
+            margin-right: 16px;
+        }
+
+        .track-image {
+            width: 40px;
+            height: 40px;
+            margin-right: 16px;
+            border-radius: 4px;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-title {
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .track-plays {
+            color: #b3b3b3;
+            font-size: 0.9em;
+        }
+
+        .verified-icon {
+            color: #1ed760;
+            margin-left: 8px;
+            font-size: 1.2em;
+        }
+
+        .more-options {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            margin-left: 16px;
+            font-size: 1.2em;
+        }
+
+
+        .mood-selection {
+            padding: 40px 24px;
+            background: rgba(24, 24, 24, 0.7);
+            margin: 30px 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .mood-selection h2 {
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            text-align: left;
+        }
+
+        .mood-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .mood-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+
+        .mood-item:hover {
+            transform: translateY(-10px);
+        }
+
+        .hero-image {
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            transition: transform 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-image:hover {
+            transform: scale(1.05);
+        }
+
+        .caption {
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 500px;
+            padding: 8px 24px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        .Play {
+            background: #d466ff;
+            color: white;
+        }
+        .anger {
+            background: #ff3b30;
+            color: white;
+        }
+        .Anger_text {
+            color: #ff3b30;
+        }
+
+        .relaxed {
+            background: gray;
+            color: white;
+        }
+        .Relaxed_text {
+            color: gray;
+        }
+
+        .happy {
+            background: #ffcc00;
+            color: rgb(255, 255, 255);
+        }
+        .happy_text {
+            color: #ffcc00;
+        }
+        .sad {
+            background: #007aff;
+            color: white;
+        }
+        .sad_text {
+            color: #007aff;
+        }
+
+        .love {
+            background: #ff2d55;
+            color: white;
+        }
+        .Love_text {
+            color: #ff2d55;
+        }
+
+        button {
+            outline: none;
+            cursor: pointer;
+            border: none;
+            padding: 0.9rem 2rem;
+            margin: 0;
+            font-family: inherit;
+            font-size: inherit;
+            position: relative;
+            display: inline-block;
+            letter-spacing: 0.05rem;
+            font-weight: 700;
+            font-size: 17px;
+            border-radius: 500px;
+            overflow: hidden;
+            background: #d466ff;
+            color: ghostwhite;
+        }
+
+        button span {
+            position: relative;
+            z-index: 10;
+            transition: color 0.4s;
+        }
+
+        button:hover span {
+            color: black;
+        }
+
+        button::before,
+        button::after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        button::before {
+            content: "";
+            background: #000;
+            width: 120%;
+            left: -10%;
+            transform: skew(30deg);
+            transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
+        }
+
+        button:hover::before {
+            transform: translate3d(100%, 0, 0);
+        }
+
+        .music-container {
+            margin: 50px auto;
+            max-width: 800px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .music-container h2 {
+            margin-bottom: 20px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 30px;
+        }
+
+        .footer {
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .neon-text {
+            color: #5f6df1;
+            text-shadow: 0 0 5px #4a58db, 0 0 10px #604adb, 0 0 20px#894adb, 0 0 30px #a64adb, 0 0 40px #ff00ff, 0 0 50px #ff00ff, 0 0 75px #ff00ff;
+        }
+
+        /*profile page*/
+
+body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background: linear-gradient(135deg,#1C1B4D, #B80E65, #179181);
+            color: white;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #d466ff;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 10px;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #4ecdc4;
+        }
+
+        .artist-profile {
+            padding: 100px 24px 24px;
+            background: linear-gradient(to bottom, rgba(83, 83, 83, 0.7), rgba(18, 18, 18, 0.7));
+            text-align: left;
+        }
+
+        .artist-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .artist-image {
+            width: 232px;
+            height: 232px;
+            object-fit: cover;
+            border-radius: 50%;
+            box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .artist-info {
+            flex: 1;
+        }
+
+        .artist-name {
+            font-size: 6em;
+            margin: 0;
+            font-weight: bold;
+            letter-spacing: -0.04em;
+        }
+
+        .monthly-listeners {
+            color: #b3b3b3;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+
+        .artist-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .follow-button {
+            background: transparent;
+            color: white;
+            border: 1px solid #727272;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .follow-button:hover {
+            background: #d466ff;
+            color: white;
+        }
+
+        .more-button {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .more-button:hover {
+            background: #d466ff;
+            color: white;
+        }
+
+        .shuffle-button {
+            background: #1ed760;
+            color: black;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: auto;
+            font-size: 1.5em;
+        }
+
+        .popular-tracks {
+            padding: 24px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .popular-tracks h2 {
+            font-size: 1.5em;
+            margin-bottom: 16px;
+        }
+
+        .track-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+            background-color: rgba(20, 20, 20, 0.5);
+        }
+
+        .track-item:hover {
+            background-color: rgba(40, 40, 40, 0.7);
+            transform: translateY(-3px);
+        }
+
+
+
+        .track-number {
+            width: 24px;
+            color: #b3b3b3;
+            text-align: right;
+            margin-right: 16px;
+        }
+
+        .track-image {
+            width: 40px;
+            height: 40px;
+            margin-right: 16px;
+            border-radius: 4px;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-title {
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .track-plays {
+            color: #b3b3b3;
+            font-size: 0.9em;
+        }
+
+        .verified-icon {
+            color: #1ed760;
+            margin-left: 8px;
+            font-size: 1.2em;
+        }
+
+        .more-options {
+            color: #b3b3b3;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            margin-left: 16px;
+            font-size: 1.2em;
+        }
+
+
+        .mood-selection {
+            padding: 40px 24px;
+            background: rgba(24, 24, 24, 0.7);
+            margin: 30px 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .mood-selection h2 {
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            text-align: left;
+        }
+
+        .mood-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .mood-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+
+        .mood-item:hover {
+            transform: translateY(-10px);
+        }
+
+        .hero-image {
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            transition: transform 0.3s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-image:hover {
+            transform: scale(1.05);
+        }
+
+        .caption {
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 500px;
+            padding: 8px 24px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        .Play {
+            background: #d466ff;
+            color: white;
+        }
+        .anger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .relaxed {
+            background: gray;
+            color: white;
+        }
+
+        .happy {
+            background: #ffcc00;
+            color: rgb(255, 255, 255);
+        }
+
+        .sad {
+            background: #007aff;
+            color: white;
+        }
+
+        .love {
+            background: #ff2d55;
+            color: white;
+        }
+
+        button {
+            outline: none;
+            cursor: pointer;
+            border: none;
+            padding: 0.9rem 2rem;
+            margin: 0;
+            font-family: inherit;
+            font-size: inherit;
+            position: relative;
+            display: inline-block;
+            letter-spacing: 0.05rem;
+            font-weight: 700;
+            font-size: 17px;
+            border-radius: 500px;
+            overflow: hidden;
+            background: #d466ff;
+            color: #fff; /* Ensure button text is white */
+        }
+
+        button span {
+            COLOR: #fff;
+            position: relative;
+            z-index: 10;
+            transition: color 0.4s;
+        }
+
+        button:hover span {
+            color: black;
+        }
+        editProfileNameBtn {
+
+            background: #d466ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+        }
+        editProfileNameBtn:hover {
+            background: #ffcc00;
+        }
+
+        button::before,
+        button::after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        button::before {
+            content: "";
+            background: #000;
+            width: 120%;
+            left: -10%;
+            transform: skew(30deg);
+            transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
+        }
+
+        button:hover::before {
+            transform: translate3d(100%, 0, 0);
+        }
+
+        .music-container {
+            margin: 50px auto;
+            max-width: 800px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .music-container h2 {
+            margin-bottom: 20px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 30px;
+        }
+
+        .footer {
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .neon-text {
+            color: #5f6df1;
+            text-shadow: 0 0 5px #4a58db, 0 0 10px #604adb, 0 0 20px#894adb, 0 0 30px #a64adb, 0 0 40px #ff00ff, 0 0 50px #ff00ff, 0 0 75px #ff00ff;
+        }
+        .profile-bio {
+        margin: 18px 0 10px 0;
+        font-size: 1.2em;
+        color: #e0e0e0;
+        line-height: 1.5;
+    }
+
+    .profile-socials {
+        margin-bottom: 12px;
+    }
+
+    .social-icon {
+        display: inline-block;
+        width: 36px;
+        height: 36px;
+        line-height: 36px;
+        margin: 0 6px;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 1.3em;
+        text-align: center;
+        text-decoration: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .social-icon:hover {
+        transform: scale(1.15);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+
+    .profile-divider {
+        border: none;
+        border-top: 2px solid #d466ff;
+        margin: 16px 0 12px 0;
+        width: 60%;
+    }
+
+    .favorite-genres {
+        margin-bottom: 8px;
+    }
+    .genre-tag {
+        display: inline-block;
+        background: #4ecdc4;
+        color: #222;
+        border-radius: 20px;
+        padding: 4px 16px;
+        margin: 0 4px 4px 0;
+        font-size: 0.95em;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    }
+
+
+    /*sign in*/
+body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background: linear-gradient(135deg,#1C1B4D, #B80E65, #179181);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #d466ff;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 10px;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #4ecdc4;
+        }
+
+        .signin-container {
+            max-width: 400px;
+            margin: auto;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            margin-top: 120px;
+        }
+
+        .signin-container h1 {
+            margin-bottom: 30px;
+            font-size: 2em;
+            color: #d466ff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .remember-me input {
+            margin-right: 10px;
+        }
+
+        button {
+            outline: none;
+            cursor: pointer;
+            border: none;
+            padding: 0.9rem 2rem;
+            margin: 0;
+            font-family: inherit;
+            font-size: inherit;
+            position: relative;
+            display: inline-block;
+            letter-spacing: 0.05rem;
+            font-weight: 700;
+            font-size: 17px;
+            border-radius: 500px;
+            overflow: hidden;
+            background: #d466ff;
+            color: ghostwhite;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        button span {
+            position: relative;
+            z-index: 10;
+            transition: color 0.4s;
+        }
+
+        button:hover span {
+            color: black;
+        }
+
+        button::before,
+        button::after {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        button::before {
+            content: "";
+            background: #000;
+            width: 120%;
+            left: -10%;
+            transform: skew(30deg);
+            transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
+        }
+
+        button:hover::before {
+            transform: translate3d(100%, 0, 0);
+        }
+
+        .signup-link {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #ccc;
+        }
+
+        .signup-link a {
+            color: #d466ff;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        .social-signin {
+            margin-top: 30px;
+        }
+
+        .social-signin p {
+            margin-bottom: 15px;
+            color: #ccc;
+            position: relative;
+        }
+
+        .social-signin p::before,
+        .social-signin p::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .social-signin p::before {
+            left: 0;
+        }
+
+        .social-signin p::after {
+            right: 0;
+        }
+
+        .social-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .social-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .social-button:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer {
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ccc;
+            margin-top: auto;
+        }
