@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MoodTune — Admin Profile</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="logo">Mood<span>Tune</span></div>
+      <nav>
+        <ul>
+          <li><a href="{{ url_for('admin_home') }}">Home</a></li>
+          <li><a href="{{ url_for('admin_library_page') }}">Library</a></li>
+          <li><a href="{{ url_for('admin_about_page') }}">About</a></li>
+          <li><a href="{{ url_for('admin') }}">Admin</a></li>
+          <li><a href="{{ url_for('admin_profile_page') }}" class="active">Profile</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2 style="margin-top:0">Admin Profile</h2>
+      <p class="motto">View and manage administrator account settings here.</p>
+      <p class="note">We can incorporate admin-specific settings and permissions on request.</p>
+    </div>
+  </div>
+</body>
+</html>

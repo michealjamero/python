@@ -482,64 +482,121 @@
                     <li><a href="{{ url_for('library') }}">Library</a></li>
                     <li><a href="{{ url_for('about') }}">About</a></li>
                     <li><a href="{{ url_for('profile') }}">Profile</a></li>
-                    <li><a href="{{ url_for('signin') }}">Sign-in</a></li>
+                    {% if session.get('user_id') %}
+<li><a href="{{ url_for('logout') }}">Logout</a></li>
+{% else %}
+<li><a href="{{ url_for('signin') }}">Sign-in</a></li>
+{% endif %}
                 </ul>
             </nav>
         </div>
     </header>
 
 
-    <!--user-profile-->
-    <section class="artist-profile">
-    <div class="artist-header">
-        <img src="{{ url_for('static', filename='artist_profile.jpg') }}" alt="Artist Profile" class="artist-image">
-        <div class="artist-info">
-            <h1 class="artist-name">Micheal Shane</h1>
-            <button class="happy caption"><span>Change profile</span></button>
-            <button class="happy caption"><span>Change Name</span></button>
+<!-- USER PROFILE -->
+<section class="artist-profile" style="padding: 20px; background: rgba(0,0,0,0.5); border-radius: 12px; margin-bottom: 30px;">
+    <div class="artist-header" style="display:flex; gap:20px; align-items:center;">
+        <!-- Profile Image -->
+        <img src="{{ url_for('static', filename=(profile['image'] or 'defultimage.jpg')) }}" alt="Artist Profile" class="artist-image"
+             style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:2px solid #d466ff;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='Untitled design (1).png') }}'">
+
+        <div class="artist-info" style="flex:1;">
+            <!-- Profile Name -->
+            <h1 id="profileName" class="artist-name" style="font-size:28px;margin:0 0 10px 0;">{{ username }}</h1>
+
+            <!-- Buttons -->
+            <button id="changeImageBtn" class="happy caption" style="margin-right:10px;background:#d466ff;color:white;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;">
+                <span>Change Profile</span>
+            </button>
+            <button id="changeNameBtn" class="happy caption" style="background:#d466ff;color:white;border:none;padding:6px 12px;border-radius:5px;cursor:pointer;">
+                <span>Change Name</span>
+            </button>
+
+            <!-- Hidden Upload Form -->
+            <form id="uploadForm" action="{{ url_for('update_profile_image') }}" method="POST" enctype="multipart/form-data" style="display:none;">
+                <input type="file" name="profile_image" id="profileImageInput" accept="image/*" onchange="document.getElementById('uploadForm').submit()">
+            </form>
+
             <!-- Profile Bio -->
-            <p class="profile-bio">
+            <p class="profile-bio" style="margin-top:15px;color:#ccc;">
                 🎵 Music lover, mood explorer, and playlist curator.<br>
                 Sharing my favorite tunes and emotions with the world!
             </p>
+
             <!-- Social Media Links -->
-            <div class="profile-socials">
-                <a href="#" title="Instagram" class="social-icon" style="background:#E1306C;">&#x1F4F7;</a>
-                <a href="#" title="Twitter" class="social-icon" style="background:#1DA1F2;">&#x1F426;</a>
-                <a href="#" title="Spotify" class="social-icon" style="background:#1DB954;">&#x1F3B5;</a>
+            <div class="profile-socials" style="margin-top:10px; display:flex; gap:8px;">
+                <a href="#" title="Instagram" class="social-icon" style="background:#E1306C;padding:6px 10px;border-radius:5px;text-decoration:none;color:white;">📷</a>
+                <a href="#" title="Twitter" class="social-icon" style="background:#1DA1F2;padding:6px 10px;border-radius:5px;text-decoration:none;color:white;">🐦</a>
+                <a href="#" title="Spotify" class="social-icon" style="background:#1DB954;padding:6px 10px;border-radius:5px;text-decoration:none;color:white;">🎵</a>
             </div>
+
             <!-- Decorative Divider -->
-            <hr class="profile-divider">
+            <hr class="profile-divider" style="margin:15px 0; border:0; height:1px; background:rgba(255,255,255,0.1);">
+
             <!-- Favorite Genres -->
-            <div class="favorite-genres">
-                <span class="genre-tag">Pop</span>
-                <span class="genre-tag">R&B</span>
-                <span class="genre-tag">Afrobeats</span>
-                <span class="genre-tag">Jazz</span>
+            <div class="favorite-genres" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span class="genre-tag" style="background:#d466ff;padding:4px 8px;border-radius:12px;font-size:12px;">Pop</span>
+                <span class="genre-tag" style="background:#d466ff;padding:4px 8px;border-radius:12px;font-size:12px;">R&B</span>
+                <span class="genre-tag" style="background:#d466ff;padding:4px 8px;border-radius:12px;font-size:12px;">Afrobeats</span>
+                <span class="genre-tag" style="background:#d466ff;padding:4px 8px;border-radius:12px;font-size:12px;">Jazz</span>
             </div>
         </div>
     </div>
 </section>
 
+<script>
+    // === Change Profile Picture ===
+    const changeImageBtn = document.getElementById('changeImageBtn');
+    const profileImageInput = document.getElementById('profileImageInput');
+
+    changeImageBtn.addEventListener('click', () => {
+        profileImageInput.click();
+    });
+
+    // === Change Profile Name ===
+    const changeNameBtn = document.getElementById('changeNameBtn');
+    const profileName = document.getElementById('profileName');
+
+    changeNameBtn.addEventListener('click', () => {
+        const newName = prompt("Enter your new profile name:", profileName.innerText);
+        if (newName && newName.trim() !== "") {
+            fetch("{{ url_for('update_profile_name') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    profileName.innerText = newName;
+                    alert("✅ Profile name updated!");
+                } else {
+                    alert("❌ Failed to update name.");
+                }
+            });
+        }
+    });
+</script>
+
+
 <section class="recently-played" style="padding: 40px 24px; background: rgba(24, 24, 24, 0.7); margin: 30px 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);">
     <h2 style="margin-bottom: 30px; font-size: 1.8em; text-align: left;">Recently Played</h2>
+    
     <div style="max-height: 600px; overflow-y: auto; padding-right: 10px; scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #d466ff rgba(0,0,0,0.2);">
-        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
             {% for track in recently_played %}
-            <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/' + track['album_cover']) }}" alt="Album Cover" style="border-radius:5px;width:100%;height:150px;object-fit:cover;margin:auto;margin-bottom:10px;">
-                <div style="text-align:left;">
-                    <h3 style="font-size:14px;color:white;margin:0;">{{ track['artist'] }} - {{ track['song_title'] }}</h3>
-                    <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">{{ track['mood'] if track['mood'] is defined else 'Mixed' }} • {{ track['duration'] if track['duration'] is defined else '3:30' }}</p>
-                    <audio controls style="width:100%;height:30px;">
-                        <source src="{{ url_for('static', filename=track['audio_file']) }}" type="audio/mpeg">
-                    </audio>
-                </div>
+            <div class="music-player" style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                <img src="{{ url_for('static', filename='images/' + track['album_cover']) }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <h3 style="font-size:14px;color:white;margin:0;text-align:center;">{{ track['song_title'] }}</h3>
+                <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">{{ track['mood'] if track['mood'] is defined else 'Mixed' }} • {{ track.get('duration', '3:30') }}</p>
+                <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename=track['audio_file']) }}" type="audio/mpeg"></audio>
             </div>
             {% endfor %}
         </div>
     </div>
 </section>
+
+
 
 
 
@@ -626,5 +683,48 @@
             </div>
         </div>
     </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const players = document.querySelectorAll('.music-player audio');
+        const listContainer = document.querySelector('section.recently-played > div > div');
+
+        players.forEach(audio => {
+            audio.addEventListener('play', () => {
+                const container = audio.closest('.music-player');
+                const titleElement = container.querySelector('h3');
+                const moodElement = container.querySelector('p');
+                const imgElement = container.querySelector('img');
+
+                const songTitle = titleElement ? titleElement.innerText.trim() : 'Unknown';
+                const moodText = moodElement ? moodElement.innerText.trim() : '';
+                const audioFile = audio.querySelector('source')?.getAttribute('src')?.split('/').pop() || '';
+                const albumCover = imgElement ? imgElement.getAttribute('src').split('/').pop() : 'default.jpg';
+
+                const mood = moodText.split('•')[0].trim();
+                const artist = songTitle.includes('-') ? songTitle.split('-')[0].trim() : 'Unknown Artist';
+
+                fetch('/play_song', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        song_title: songTitle,
+                        artist: artist,
+                        album_cover: albumCover,
+                        audio_file: audioFile,
+                        mood: mood
+                    })
+                })
+                .then(r => r.json())
+                .then(() => {
+                    if (listContainer && container) {
+                        listContainer.insertBefore(container, listContainer.firstChild);
+                    }
+                })
+                .catch(err => console.error('Error tracking song:', err));
+            });
+        });
+    });
+    </script>
 </body>
 </html>

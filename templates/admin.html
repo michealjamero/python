@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MoodTune Admin — Music Catalog</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+/* keep the admin UI compact and consistent with MoodTune */
+body { font-family: Arial, sans-serif; background: linear-gradient(135deg,#1C1B4D,#B80E65,#179181); color: #fff; margin:0; }
+header { position: sticky; top:0; background: rgba(0,0,0,0.75); padding:12px 20px; display:flex; align-items:center; gap:12px; z-index:100; }
+header h1 { margin:0; font-size: 1.2rem; color: #d466ff; }
+.container { max-width:1100px; margin:28px auto; padding:20px; }
+.card { background: rgba(0,0,0,0.6); border-radius:10px; padding:16px; box-shadow: 0 6px 30px rgba(0,0,0,0.6); }
+.grid { display:grid; grid-template-columns: 1fr 380px; gap:20px; align-items:start; }
+label { display:block; font-size:0.85rem; color:#ccc; margin-bottom:6px; }
+input[type="text"], input[type="file"], select, textarea { width:100%; padding:10px; border-radius:6px; border: none; background: rgba(255,255,255,0.06); color: #fff; box-sizing:border-box; }
+button { background:#d466ff; color:white; padding:10px 14px; border-radius:999px; border:none; cursor:pointer; font-weight:700; }
+.btn-danger { background:#ff3b30; }
+table { width:100%; border-collapse:collapse; margin-top:12px; color:#fff; font-size:0.95rem; }
+th,td { padding:10px 8px; text-align:left; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+.cover { width:56px; height:56px; object-fit:cover; border-radius:6px; }
+.actions { display:flex; gap:8px; }
+.small { font-size:0.85rem; padding:6px 10px; border-radius:999px; }
+.muted { color:#b3b3b3; font-size:0.85rem; margin-top:8px; }
+.note { margin-top:8px; color:#cfcfcf; font-size:0.9rem; }
+.motto { color:#b3b3b3; font-size:0.9rem; margin-bottom:12px; }
+/* modal */
+.modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:200; }
+.modal.open { display:flex; }
+.modal-card { width:680px; max-width:95%; background:rgba(10,10,10,0.95); padding:18px; border-radius:12px; }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.input-inline { display:flex; gap:8px; }
+.input-inline input { flex:1; }
+</style>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+    <header>
+        <div class="nav-container">
+            <div class="logo">Mood<span>Tune</span></div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('admin_home') }}">Home</a></li>
+                    <li><a href="{{ url_for('admin_library_page') }}">Library</a></li>
+                    <li><a href="{{ url_for('admin_about_page') }}">About</a></li>
+                    <li><a href="{{ url_for('admin') }}">Admin</a></li>
+                    <li><a href="{{ url_for('admin_profile_page') }}">Profile</a></li>
+                    {% if session.get('user_id') %}
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                    <li><a href="{{ url_for('signin') }}">Sign-in</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+<div class="container">
+<div class="card">
+
+<div class="grid">
+<!-- LEFT: list of songs -->
+<div>
+<h3 style="margin-top:0;">Music Catalog</h3>
+{% if songs %}
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Cover</th>
+<th>Title / Artist</th>
+<th>Mood / Duration</th>
+<th>Files</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+{% for s in songs %}
+<tr>
+<td>{{ loop.index }}</td>
+<td><img src="{{ url_for('static', filename=s['album_cover']) }}" class="cover" alt="cover"></td>
+<td>
+<div style="font-weight:700;">{{ s['song_title'] }}</div>
+<div class="muted">{{ s['artist'] }}</div>
+</td>
+<td>
+<div>{{ s['mood'] }}</div>
+<div class="muted">{{ s['duration'] or '—' }}</div>
+</td>
+<td class="muted" style="max-width:160px; overflow:hidden; text-overflow:ellipsis;">
+{{ s['audio_file'] }}
+</td>
+<td>
+<div class="actions">
+<button class="small" onclick="openEdit({{ s['id'] }})">Edit</button>
+<form method="POST" action="{{ url_for('admin_delete', song_id=s['id']) }}" style="display:inline;">
+<button class="small btn-danger" type="submit" onclick="return confirm('Delete this song?')">Delete</button>
+</form>
+</div>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p class="muted">No songs in the catalog yet. Use the form on the right to add songs.</p>
+{% endif %}
+</div>
+<!-- RIGHT: add song form -->
+<div>
+<h3 style="margin-top:0;">Add New Song</h3>
+<form method="POST" action="{{ url_for('admin_add') }}" enctype="multipart/form-data">
+<div style="margin-bottom:12px;">
+<label for="song_title">Song Title</label>
+<input type="text" id="song_title" name="song_title" required>
+</div>
+<div style="margin-bottom:12px;">
+<label for="artist">Artist</label>
+<input type="text" id="artist" name="artist" required>
+</div>
+<div style="margin-bottom:12px;">
+<label for="mood">Mood</label>
+<select id="mood" name="mood" required>
+<option value="">Select mood...</option>
+<option value="Happy">Happy</option>
+<option value="Sad">Sad</option>
+<option value="Energetic">Energetic</option>
+<option value="Calm">Calm</option>
+<option value="Romantic">Romantic</option>
+</select>
+</div>
+<div style="margin-bottom:12px;">
+<label for="duration">Duration (optional)</label>
+<input type="text" id="duration" name="duration" placeholder="e.g. 3:45">
+</div>
+<div style="margin-bottom:12px;">
+<label for="album_cover">Album Cover Image</label>
+<input type="file" id="album_cover" name="album_cover" accept="image/*" required>
+<div class="note">Square image recommended (JPG, PNG)</div>
+</div>
+<div style="margin-bottom:16px;">
+<label for="audio_file">Audio File</label>
+<input type="file" id="audio_file" name="audio_file" accept="audio/*" required>
+<div class="note">MP3 format recommended</div>
+</div>
+<button type="submit"><span>Add Song</span></button>
+</form>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal" id="editModal">
+<div class="modal-card">
+<div class="modal-header">
+<h3 style="margin:0;">Edit Song</h3>
+<button onclick="closeModal()" style="background:none; color:#999; font-size:1.5rem; padding:0;">&times;</button>
+</div>
+<form method="POST" action="" id="editForm" enctype="multipart/form-data">
+<div style="margin-bottom:12px;">
+<label for="edit_song_title">Song Title</label>
+<input type="text" id="edit_song_title" name="song_title" required>
+</div>
+<div style="margin-bottom:12px;">
+<label for="edit_artist">Artist</label>
+<input type="text" id="edit_artist" name="artist" required>
+</div>
+<div style="margin-bottom:12px;">
+<label for="edit_mood">Mood</label>
+<select id="edit_mood" name="mood" required>
+<option value="Happy">Happy</option>
+<option value="Sad">Sad</option>
+<option value="Energetic">Energetic</option>
+<option value="Calm">Calm</option>
+<option value="Romantic">Romantic</option>
+</select>
+</div>
+<div style="margin-bottom:12px;">
+<label for="edit_duration">Duration (optional)</label>
+<input type="text" id="edit_duration" name="duration" placeholder="e.g. 3:45">
+</div>
+<div style="margin-bottom:12px;">
+<label for="edit_album_cover">Album Cover Image (leave empty to keep current)</label>
+<input type="file" id="edit_album_cover" name="album_cover" accept="image/*">
+<div class="note">Square image recommended (JPG, PNG)</div>
+</div>
+<div style="margin-bottom:16px;">
+<label for="edit_audio_file">Audio File (leave empty to keep current)</label>
+<input type="file" id="edit_audio_file" name="audio_file" accept="audio/*">
+<div class="note">MP3 format recommended</div>
+</div>
+<button type="submit">Save Changes</button>
+</form>
+</div>
+</div>
+
+<script>
+function openEdit(id) {
+  // In a real app, you'd fetch the song data via AJAX
+  // For this demo, we'll use the data from the table
+  const row = document.querySelector(`tr:nth-child(${id})`);
+  if (!row) return;
+  
+  // Set form action
+  const form = document.getElementById('editForm');
+  form.action = `/admin/edit/${id}`;
+  
+  // Populate form fields
+  document.getElementById('edit_song_title').value = row.querySelector('td:nth-child(3) div:first-child').textContent.trim();
+  document.getElementById('edit_artist').value = row.querySelector('td:nth-child(3) div:last-child').textContent.trim();
+  document.getElementById('edit_mood').value = row.querySelector('td:nth-child(4) div:first-child').textContent.trim();
+  document.getElementById('edit_duration').value = row.querySelector('td:nth-child(4) div:last-child').textContent.trim();
+  
+  // Open modal
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('open');
+}
+</script>
+</body>
+</html>
