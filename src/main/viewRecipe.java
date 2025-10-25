@@ -308,4 +308,27 @@ public class viewRecipe {
             System.out.println("⚠️ Error retrieving recipes: " + e.getMessage());
         }
     }
+
+    public void viewAllRecipes() {
+        // Delegate to existing static method
+        viewAllRecipe();
+    }
+    
+    public void viewMyRecipes(int userId) {
+        User.currentUserId = userId;
+        config db = new config();
+        db.connectDB();
+    
+        String listSql = "SELECT r.r_ID, r.r_title, r.r_description, r.r_date, COALESCE(r.r_status,'Draft') AS r_status " +
+                         "FROM recipe r JOIN Users u ON u.u_username = r.r_owner WHERE u.u_ID = " + userId;
+        String[] headers = {"ID","TITLE","DESCRIPTION","DATE","STATUS"};
+        String[] columns = {"r_ID","r_title","r_description","r_date","r_status"};
+    
+        int count = db.countRecords("SELECT COUNT(*) FROM recipe r JOIN Users u ON u.u_username = r.r_owner WHERE u.u_ID = ?", userId);
+        System.out.println("\n=== MY RECIPES ===");
+        db.viewRecords(listSql, headers, columns);
+        if (count == 0) {
+            System.out.println("You have no recipes.");
+        }
+    }
 }
