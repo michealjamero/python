@@ -40,7 +40,7 @@ public class Ingredients {
 
         System.out.print("How many ingredients to add? ");
         int count = sc.nextInt();
-        sc.nextLine(); // consume newline
+        sc.nextLine();
 
         for (int i = 1; i <= count; i++) {
             System.out.println("\nIngredient " + i + ":");

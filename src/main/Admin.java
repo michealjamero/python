@@ -14,22 +14,22 @@ public class Admin {
     Scanner sc = new Scanner(System.in);
     config db = new config();
 
-    // Email validation pattern
+    
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
         "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
     );
 
-    // Username validation pattern (alphanumeric, 4–20 chars)
+   
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9]{4,20}$");
 
     public void signUpAdminDB() {
         System.out.println("\n=== ADMIN SIGN UP ===");
 
-        // Full name
+        
         System.out.print("Full Name: ");
         String name = sc.nextLine();
 
-        // Email with validation
+        
         String email;
         do {
             System.out.print("Email: ");
@@ -39,7 +39,7 @@ public class Admin {
             }
         } while (!EMAIL_PATTERN.matcher(email).matches());
 
-        // Username with validation
+        
         String username;
         do {
             System.out.print("Username (4-20 alphanumeric characters): ");
@@ -52,7 +52,7 @@ public class Admin {
             }
         } while (!USERNAME_PATTERN.matcher(username).matches() || isUsernameTaken(username));
 
-        // Password with confirmation
+       
         String password;
         String confirmPassword;
         do {
@@ -68,14 +68,15 @@ public class Admin {
             }
         } while (password.length() < 6 || !password.equals(confirmPassword));
 
-        // Insert into consolidated 'users' table; store plain password to match login
+        
+        String hashed = config.hashPassword(password);
         String sql = "INSERT INTO users (u_full_name, u_email, u_username, u_password, u_role, u_verified) VALUES (?, ?, ?, ?, ?, ?)";
-        db.addRecord(sql, name, email, username, password, "admin", 1);
+        db.addRecord(sql, name, email, username, hashed, "admin", 1);
 
         System.out.println("✅ Admin account created successfully!");
     }
 
-    // Check if username already exists
+    
     private boolean isUsernameTaken(String username) {
         String sql = "SELECT * FROM users WHERE u_username = ?";
         ResultSet rs = db.getRecord(sql, username);
@@ -87,7 +88,7 @@ public class Admin {
         }
     }
 
-    // Hash password using SHA-256
+    
     private String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

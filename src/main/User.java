@@ -20,12 +20,8 @@ public class User {
 
     public static void registerAdmin() {
     System.out.println("\n=== ADMIN SIGN UP ===");
-
-    // Full Name
     System.out.print("Full Name(Firstname Lastname): ");
     String name = sc.nextLine();
-
-    // Email validation
     String email;
     do {
         System.out.print("Email(example@mail.com): ");
@@ -34,8 +30,6 @@ public class User {
             System.out.println("⚠️ Invalid email format. Please try again.");
         }
     } while (!EMAIL_PATTERN.matcher(email).matches());
-
-    // Username validation
     String username;
     do {
         System.out.print("Username (4-20 alphanumeric characters): ");
@@ -44,11 +38,9 @@ public class User {
             System.out.println("⚠️ Username must be 4-20 alphanumeric characters.");
         } else if (usernameExists(username)) {
             System.out.println("⚠️ Username already taken. Please choose another.");
-            username = ""; // Reset to force re-entry
+            username = ""; 
         }
     } while (!USERNAME_PATTERN.matcher(username).matches() || usernameExists(username));
-
-    // Password + confirmation
     String password;
     String confirmPassword;
     do {
@@ -63,10 +55,9 @@ public class User {
             System.out.println("⚠️ Passwords do not match. Please try again.");
         }
     } while (password.length() < 6 || !password.equals(confirmPassword));
-
-    // Save admin with plain password
+String hashed = config.hashPassword(password);
 String sql = "INSERT INTO users (u_full_name, u_email, u_username, u_password, u_role, u_verified) VALUES (?, ?, ?, ?, ?, ?)";
-db.addRecord(sql, name, email, username, password, "admin", "0"); 
+db.addRecord(sql, name, email, username, hashed, "admin", "0"); 
 
 
 
@@ -75,12 +66,8 @@ db.addRecord(sql, name, email, username, password, "admin", "0");
 
 public static void registerUser() {
     System.out.println("\n===== USER REGISTRATION =====");
-
-    // Full Name
     System.out.print("Full Name (Firstname Lastname): ");
     String fullName = sc.nextLine();
-
-    // Email validation
     String email;
     do {
         System.out.print("Email (example@mail.com): ");
@@ -89,8 +76,6 @@ public static void registerUser() {
             System.out.println("⚠️ Invalid email format. Please try again.");
         }
     } while (!EMAIL_PATTERN.matcher(email).matches());
-
-    // Username validation
     String username;
     do {
         System.out.print("Username (4-20 alphanumeric characters): ");
@@ -99,11 +84,9 @@ public static void registerUser() {
             System.out.println("⚠️ Username must be 4-20 alphanumeric characters.");
         } else if (usernameExists(username)) {
             System.out.println("⚠️ Username already taken. Please choose another.");
-            username = ""; // Reset to force re-entry
+            username = "";
         }
     } while (!USERNAME_PATTERN.matcher(username).matches() || usernameExists(username));
-
-    // Password + confirmation
     String password;
     String confirmPassword;
     do {
@@ -120,14 +103,12 @@ public static void registerUser() {
     } while (password.length() < 6 || !password.equals(confirmPassword));
 
     // Save user with plain password
+    String hashed = config.hashPassword(password);
     String sql = "INSERT INTO users (u_full_name, u_email, u_username, u_password, u_role) VALUES (?, ?, ?, ?, ?)";
-    db.addRecord(sql, fullName, email, username, password, "user");
+    db.addRecord(sql, fullName, email, username, hashed, "user");
 
     System.out.println("✅ User registered successfully!");
 }
-
-
- // Track current logged-in user identity
  public static String currentUsername = null;
  public static int currentUserId = -1;
  public static String loginUser() {
@@ -141,7 +122,8 @@ public static void registerUser() {
         PreparedStatement pst = con.prepareStatement(sql);
         pst.setString(1, loginId);
         pst.setString(2, loginId);
-        pst.setString(3, password); // ⚠️ plain password as per existing code
+        String hashedLogin = config.hashPassword(password);
+        pst.setString(3, hashedLogin); 
         ResultSet rs = pst.executeQuery();
 
         if (rs.next()) {
@@ -151,7 +133,7 @@ public static void registerUser() {
             currentUsername = rs.getString("u_username");
 
             System.out.println("✅ Welcome " + name + "! Role: " + role + " (" + currentUsername + ")");
-            return role; // return "admin" or "user"
+            return role;
         } else {
             System.out.println("⚠️ Invalid login.");
         }
@@ -187,7 +169,7 @@ public static void registerUser() {
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
             System.out.println("⚠️ Error hashing password: " + e.getMessage());
-            return password; // fallback
+            return password; 
         }
     }
 
@@ -217,7 +199,7 @@ public static void approveAdmins() {
 
         System.out.print("\nEnter the ID of the admin to approve/reject (0 to cancel): ");
         int idChoice = sc.nextInt();
-        sc.nextLine(); // clear buffer
+        sc.nextLine(); 
 
         if (idChoice == 0) return;
 
@@ -245,15 +227,12 @@ public static void approveAdmins() {
 }
 public static void viewApprovedRecipes() {
     Scanner sc = new Scanner(System.in);
-
-    // Use shared viewRecords to list approved recipes
     config db = new config();
     db.connectDB();
     String listSql = "SELECT r_ID, r_title, r_description, r_date FROM recipe WHERE LOWER(r_status) = 'approved'";
     String[] headers = {"ID","TITLE","DESCRIPTION","DATE"};
     String[] columns = {"r_ID","r_title","r_description","r_date"};
 
-    // Check if there are any approved recipes first
     int approvedCount = db.countRecords("SELECT COUNT(*) FROM recipe WHERE LOWER(r_status) = 'approved'");
     System.out.println("\n=== APPROVED RECIPES ===");
     db.viewRecords(listSql, headers, columns);
@@ -262,8 +241,6 @@ public static void viewApprovedRecipes() {
         System.out.println("⚠️ No approved recipes yet.");
         return;
     }
-
-    // Prompt for details
     System.out.print("\nEnter Recipe ID to view details (0 to cancel): ");
     String recipeId = sc.nextLine().trim();
 
@@ -279,17 +256,12 @@ public static void viewApprovedRecipes() {
         System.out.println("⚠️ Invalid recipe ID.");
         return;
     }
-
-    // Show merged details (title, category, ingredients) using unified view
     int existsApproved = db.countRecords("SELECT COUNT(*) FROM recipe WHERE r_ID = ? AND LOWER(r_status) = 'approved'", recipeIdInt);
     if (existsApproved == 0) {
         System.out.println("⚠️ Recipe not found or not approved.");
         return;
     }
-    // Inside viewApprovedRecipes(), replace the details call
     viewRecipe.viewApprovedRecipeDetails(recipeIdInt);
-
-    // Ratings and comments summary and breakdown
     int totalRatings = db.countRecords("SELECT COUNT(com_rating) FROM Comment_Rating WHERE com_recipeID = ?", recipeIdInt);
     int totalComments = db.countRecords("SELECT COUNT(*) FROM Comment_Rating WHERE com_recipeID = ? AND com_text IS NOT NULL AND TRIM(com_text) <> ''", recipeIdInt);
 
@@ -307,9 +279,6 @@ public static void viewApprovedRecipes() {
     }
 
     System.out.printf("\nRatings: %d   Comments: %d   Average: %.2f/5\n", totalRatings, totalComments, avgRating);
-
-    
-    // Actions: view comments or add a comment + rating
     System.out.println("\n=== Recipe Actions ===");
     System.out.println("1. View comments");
     System.out.println("2. Add comment + rating");
@@ -328,7 +297,6 @@ public static void viewApprovedRecipes() {
     }
 
     if (action == 1) {
-        // View non-empty comments with owners
         String commentsSql = "SELECT u.u_username AS owner, cr.com_rating AS rating, cr.com_text AS text " +
                              "FROM Comment_Rating cr JOIN Users u ON u.u_ID = cr.com_userID " +
                              "WHERE cr.com_recipeID = ? AND TRIM(COALESCE(cr.com_text,'')) <> ''";
@@ -377,7 +345,7 @@ public static void viewApprovedRecipes() {
             String commentText = sc.nextLine().trim();
             String commentInsertText = commentText.isEmpty() ? "" : commentText;
 
-            // Detect com_date column and whether it is required
+            
             boolean hasComDate = false;
             boolean comDateRequired = false;
             try (java.sql.Connection conn = config.connectDB();
@@ -393,7 +361,7 @@ public static void viewApprovedRecipes() {
                     }
                 }
             } catch (Exception e) {
-                // ignore
+                
             }
 
             if (hasComDate) {
@@ -428,26 +396,11 @@ public static void viewApprovedRecipes() {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 public void shareRecipe() {
     Scanner sc = new Scanner(System.in);
     config db = new config();
 
-    // 1. Show only current user's recipes with NULL status (draft recipes)
+    
     System.out.println("\n=== YOUR DRAFT RECIPES ===");
     String userRecipeQuery = "SELECT r_ID, r_title, r_description, r_instruction, r_date, r_status FROM recipe WHERE r_owner = ? AND r_status IS NULL";
     
@@ -484,7 +437,7 @@ public void shareRecipe() {
         return;
     }
 
-    // 2. Verify ownership and null status before sharing
+    
     String ownershipCheck = "SELECT r_owner, r_status FROM recipe WHERE r_ID = ?";
     try (java.sql.Connection conn = config.connectDB();
          java.sql.PreparedStatement pstmt = conn.prepareStatement(ownershipCheck)) {
@@ -515,7 +468,7 @@ public void shareRecipe() {
         return;
     }
 
-    // 3. Confirm selection
+    
     System.out.print("Are you sure you want to share Recipe ID " + recipeId + "? (y/n): ");
     String confirm = sc.nextLine();
 
@@ -524,7 +477,7 @@ public void shareRecipe() {
         return;
     }
 
-    // 4. Update the recipe to pending status
+    
     String sql = "UPDATE recipe SET r_status = 'Pending' WHERE r_ID = ? AND r_owner = ?";
 
     try (java.sql.Connection conn = config.connectDB();
@@ -596,6 +549,28 @@ public static void viewProfile() {
         System.out.println("⚠️ Error loading profile: " + e.getMessage());
     }
 }
+
+
+    public static void viewMyRecipesTable() {
+        try {
+            config db = new config();
+            db.connectDB();
+
+            System.out.println("\n=== YOUR RECIPES ===");
+            String listSql = "SELECT r.r_ID, r.r_title, r.r_description, r.r_date, COALESCE(r.r_status,'Draft') AS r_status " +
+                             "FROM recipe r JOIN Users u ON u.u_username = r.r_owner WHERE u.u_ID = " + currentUserId;
+            String[] headers = {"ID","TITLE","DESCRIPTION","DATE","STATUS"};
+            String[] columns = {"r_ID","r_title","r_description","r_date","r_status"};
+            db.viewRecords(listSql, headers, columns);
+
+            int count = db.countRecords("SELECT COUNT(*) FROM recipe r JOIN Users u ON u.u_username = r.r_owner WHERE u.u_ID = ?", currentUserId);
+            if (count == 0) {
+                System.out.println("You have not created any recipes yet.");
+            }
+        } catch (Exception e) {
+            System.out.println("⚠️ Error loading your recipes: " + e.getMessage());
+        }
+    }
 
 
 

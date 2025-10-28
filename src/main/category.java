@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package main;
 
 import config.config;
@@ -11,10 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-/**
- *
- * @author user
- */
+
 public class category {
     
     private static void ensureCategoryColumn() {
@@ -43,7 +36,7 @@ public class category {
         config db = new config();
         db.connectDB();
         
-        // Ensure category_id column exists
+        
         ensureCategoryColumn();
         
         int recipeId;
@@ -72,7 +65,7 @@ public class category {
             System.out.println("\nLinking category to your latest recipe (ID: " + recipeId + ").");
         }
         
-        // Verify recipe ownership
+        
         int isOwned = db.countRecords(
             "SELECT COUNT(*) FROM recipe r JOIN Users u ON u.u_username = r.r_owner " +
             "WHERE r.r_ID = ? AND u.u_ID = ?", 
@@ -89,23 +82,23 @@ public class category {
         System.out.print("Enter description: ");
         String des = sc.nextLine();
         
-        // Create category and get its ID
+        
         String sql = "INSERT INTO Category (c_name, c_description) VALUES (?, ?)";
         int categoryId = db.executeAndGetKey(sql, name, des);
         
         if (categoryId > 0) {
-            // Link the recipe to this category
+            
             String updateSql = "UPDATE recipe SET category_id = ? WHERE r_ID = ?";
             db.updateRecord(updateSql, categoryId, recipeId);
             System.out.println("✅ Category created and linked to recipe successfully!");
-            // Reset last inserted recipe id to avoid accidental linking in later flows
+            
             recipe.lastInsertedRecipeId = -1;
         } else {
             System.out.println("⚠️ Failed to create category.");
         }
     }
     
-    // New method: explicitly link a category to a given recipe ID (used right after creation)
+    
     public static void categorydBForRecipe(int recipeId){
         Scanner sc = new Scanner(System.in);
         config db = new config();
@@ -113,7 +106,7 @@ public class category {
         
         ensureCategoryColumn();
         
-        // Verify recipe ownership
+        
         int isOwned = db.countRecords(
             "SELECT COUNT(*) FROM recipe r JOIN Users u ON u.u_username = r.r_owner " +
             "WHERE r.r_ID = ? AND u.u_ID = ?", 
@@ -149,7 +142,7 @@ public class category {
 
     try (java.sql.Connection conn = config.connectDB()) {
 
-        // 1️⃣ Show all categories
+        
         String catSql = "SELECT c_id, c_name FROM category";
         try (java.sql.PreparedStatement catStmt = conn.prepareStatement(catSql);
              java.sql.ResultSet catRs = catStmt.executeQuery()) {
@@ -169,7 +162,7 @@ public class category {
             return;
         }
 
-        // 2️⃣ Show approved recipes under that category
+        
         String recipeSql = "SELECT r_ID, r_title, r_description FROM recipe WHERE category_id = ? AND r_status = 'approved'";
         try (java.sql.PreparedStatement recipeStmt = conn.prepareStatement(recipeSql)) {
             recipeStmt.setInt(1, catChoice);
@@ -200,7 +193,7 @@ public class category {
             return;
         }
 
-        // 3️⃣ Show full recipe details
+        
         String detailSql = "SELECT r_title, r_description, r_instruction, r_date " +
                            "FROM recipe WHERE r_ID = ? AND r_status = 'approved'";
         try (java.sql.PreparedStatement detailStmt = conn.prepareStatement(detailSql)) {

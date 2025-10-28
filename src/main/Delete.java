@@ -3,17 +3,13 @@ package main;
 import config.config;
 import java.util.Scanner;
 
-/**
- *
- * @author PC 30
- */
 public class Delete {
     public static void deleteDB(){
         Scanner sc = new Scanner(System.in);
         config dbConfig = new config();
         dbConfig.connectDB();
         
-        // Show the current user's recipes first
+        
         String countSql = "SELECT COUNT(*) FROM recipe r JOIN Users u ON u.u_username = r.r_owner WHERE u.u_ID = " + User.currentUserId;
         int ownedCount = dbConfig.countRecords(countSql);
         if (ownedCount == 0) {
@@ -30,14 +26,14 @@ public class Delete {
         System.out.println("\n=== DELETE RECIPE ===");
         System.out.print("Enter Recipe ID to delete (0 to cancel): ");
         int id = sc.nextInt();
-        sc.nextLine(); // consume newline
+        sc.nextLine(); 
         
         if (id == 0) {
             System.out.println("Delete cancelled. Returning to menu...");
             return;
         }
         
-        // Ownership check
+       
         int isOwned = dbConfig.countRecords("SELECT COUNT(*) FROM recipe r JOIN Users u ON u.u_username = r.r_owner WHERE r.r_ID = ? AND u.u_ID = ?", id, User.currentUserId);
         if (isOwned == 0) {
             System.out.println("You can only delete your own recipes.");

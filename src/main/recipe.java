@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package main;
 
 import config.config;
@@ -18,7 +14,7 @@ public class recipe {
         config db = new config();
         db.connectDB();
 
-        // Ensure ownership column exists before inserting
+        
         ensureOwnerColumn();
         String owner = User.currentUsername != null ? User.currentUsername : "";
         if (owner.isEmpty()) {

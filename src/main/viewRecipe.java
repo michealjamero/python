@@ -1,6 +1,4 @@
-/*
- * View functionality for recipes, ingredients, and categories
- */
+
 package main;
 
 import config.config;
@@ -9,10 +7,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-/**
- * Class for viewing recipes, ingredients, and categories
- * @author PC 30
- */
 public class viewRecipe {
     
     private static void ensureCategoryColumn() {
@@ -35,10 +29,6 @@ public class viewRecipe {
             System.out.println("⚠️ Could not ensure category_id column: " + e.getMessage());
         }
     }
-    
-    /**
-     * View all recipes in the database
-     */
     public static void viewRecordDB(){
         Scanner sc = new Scanner(System.in);
         config db = new config();
@@ -48,10 +38,6 @@ public class viewRecipe {
         String[] recipeColumns = {"r_ID", "r_title", "r_description","r_instruction","r_date"};
         db.viewRecords(recipeQuery, recipeHeaders, recipeColumns);
     }
-
-    /**
-     * View all ingredients in the database
-     */
     public static void viewIngredientsDB(){
         Scanner sc = new Scanner(System.in);
         config db = new config();
@@ -61,10 +47,6 @@ public class viewRecipe {
         String[] ingredientColumns = {"i_id", "i_name", "i_quantity", "i_unit", "i_recipeID"};
         db.viewRecords(ingredientQuery, ingredientHeaders, ingredientColumns);
     }
-
-    /**
-     * View ingredients for a specific recipe
-     */
     public static void viewIngredientsByRecipeDB(){
         Scanner sc = new Scanner(System.in);
         config db = new config();
@@ -72,7 +54,7 @@ public class viewRecipe {
         System.out.println("\n=== View Ingredients by Recipe ===");
         System.out.print("Enter Recipe ID: ");
         int recipeId = sc.nextInt();
-        sc.nextLine(); // Consume newline
+        sc.nextLine();
         
         String ingredientQuery = "SELECT i.i_id, i.i_name, i.i_quantity, i.i_unit, r.r_title " +
                                 "FROM ingredient i " +
@@ -89,10 +71,6 @@ public class viewRecipe {
             System.out.println("No ingredients found for Recipe ID: " + recipeId);
         }
     }
-
-    /**
-     * View all categories in the database
-     */
     public static void viewCategoryDB(){
         Scanner sc = new Scanner(System.in);
         config db = new config();
@@ -102,24 +80,17 @@ public class viewRecipe {
         String[] categoryColumns = {"c_id", "c_name", "c_description"};
         db.viewRecords(categoryQuery, categoryHeaders, categoryColumns);
     }
-
-    /**
-     * View recipes by category (using recipe.category_id)
-     */
     public static void viewRecipesByCategoryDB(){
         Scanner sc = new Scanner(System.in);
         config db = new config();
-        
-        // Ensure category_id column exists
         ensureCategoryColumn();
         
         System.out.println("\n=== View Recipes by Category ===");
-        // First show all categories
         viewCategoryDB();
         
         System.out.print("Enter Category ID: ");
         int categoryId = sc.nextInt();
-        sc.nextLine(); // Consume newline
+        sc.nextLine();
         
         String recipeQuery = "SELECT r.r_ID, r.r_title, r.r_description, r.r_date, c.c_name " +
                             "FROM recipe r " +
@@ -142,7 +113,6 @@ public class viewRecipe {
     }
 
     public static void viewOwnedRecipeDetails(int recipeId) {
-        // Ensure category_id column exists before querying
         ensureCategoryColumn();
     
         String sql = "SELECT r.r_ID, r.r_title, r.r_description, r.r_instruction, r.r_date, COALESCE(r.r_status,'Draft') AS r_status, " +
@@ -207,7 +177,6 @@ public class viewRecipe {
     }
 
     public static void viewApprovedRecipeDetails(int recipeId) {
-        // Ensure category_id column exists before querying
         ensureCategoryColumn();
     
         String sql = "SELECT r.r_ID, r.r_title, r.r_description, r.r_instruction, r.r_date, r.r_status, " +
@@ -268,13 +237,6 @@ public class viewRecipe {
             System.out.println("⚠️ Error retrieving approved recipe details: " + e.getMessage());
         }
     }
-
-    /**
-     * View ALL recipes with their ingredients and category
-     */
-    /**
-     * Show all recipes (profile style) directly from allRecipe table
-     */
     public static void viewAllRecipe() {
         String sql = "SELECT r_title, r_description, r_instruction, r_date, " +
                      "i_name, i_quantity, i_unit, c_name, c_description " +
@@ -310,7 +272,6 @@ public class viewRecipe {
     }
 
     public void viewAllRecipes() {
-        // Delegate to existing static method
         viewAllRecipe();
     }
     
