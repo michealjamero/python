@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MoodTune — Intro</title>
+  <style>
+    :root {
+      --color-background: #000119;
+      --stroke-width: calc(1em / 16);
+      --font-size: 30vmin;
+      --font-weight: 700;
+      --letter-spacing: calc(1em / 8);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background-color: var(--color-background);
+      display: grid;
+      font-family: Poppins, Arial, sans-serif;
+      margin: 0;
+      min-block-size: 100vh;
+      place-items: center;
+      padding: 5vmin;
+    }
+
+    .wrap { text-align: center; }
+
+    h1 {
+      background-clip: text;
+      -webkit-background-clip: text;
+      background-image: linear-gradient(to right, #09f1b8, #00a2ff, #ff00d2, #fed90f);
+      color: var(--color-background);
+      font-size: var(--font-size);
+      font-weight: var(--font-weight);
+      letter-spacing: var(--letter-spacing);
+      padding: calc(var(--stroke-width) / 2);
+      -webkit-text-stroke-color: transparent;
+      -webkit-text-stroke-width: var(--stroke-width);
+      margin: 0;
+      line-height: 0.9;
+    }
+
+    h2 {
+      color: #fff;
+      font-size: 3.2vmin;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      margin-top: 2vmin;
+      opacity: 0.9;
+    }
+
+    
+  </style>
+</head>
+<body>
+
+
+  <!-- Mood columns intro using Library mood images -->
+  <div id="page2" class="container_page_1">
+    <div class="column active">
+      <div class="content">
+        <h1>Happy</h1>
+        <div class="box">
+          <h2>Feel-good, upbeat energy</h2>
+          <p>Bright, danceable tracks designed to lift your spirits and keep motivation high. Your Happy mood tunes favor catchy melodies and positive vibes.</p>
+        </div>
+      </div>
+      <div class="bg bg1"></div>
+    </div>
+    <div class="column">
+      <div class="content">
+        <h1 class="relaxed">Relaxed</h1>
+        <div class="box">
+          <h2>Chill, calming focus</h2>
+          <p>Lo-fi, acoustic, and mellow sounds for unwinding or concentrating. Your Relaxed mood tunes keep things smooth and stress-free.</p>
+        </div>
+      </div>
+      <div class="bg bg2"></div>
+    </div>
+    <div class="column">
+      <div class="content">
+        <h1>Love</h1>
+        <div class="box">
+          <h2>Warm, romantic moments</h2>
+          <p>Heartfelt ballads and tender rhythms that set a cozy tone. Your Love mood tunes lean into emotion, connection, and comfort.</p>
+        </div>
+      </div>
+      <div class="bg bg3"></div>
+    </div>
+    <div class="column">
+      <div class="content">
+        <h1>Sad</h1>
+        <div class="box">
+          <h2>Reflective, cathartic space</h2>
+          <p>Emotive, contemplative tracks for processing feelings on tougher days. Your Sad mood tunes provide a safe soundtrack for reflection.</p>
+        </div>
+      </div>
+      <div class="bg bg4"></div>
+    </div>
+    <div class="column">
+      <div class="content">
+        <h1>Angry</h1>
+        <div class="box">
+          <h2>Intense, empowering release</h2>
+          <p>Hard-hitting beats and bold lyrics to channel frustration into energy. Your Angry mood tunes help you push through with force and focus.</p>
+        </div>
+      </div>
+      <div class="bg bg5"></div>
+    </div>
+    <!-- Header/CTA placed above wrap -->
+    <div class="wrap">
+      <h1>MoodTune</h1>
+      <h2>your Mood your Tune</h2>
+      <a href="{{ url_for('home') }}" class="cta">Explore moods</a>
+    </div>
+    <!-- Inline header/CTA embedded within the moods area -->
+    <div class="wrap wrap-inline">
+      <h1>MoodTune</h1>
+      <h2>your Mood your Tune</h2>
+      <a href="{{ url_for('home') }}" class="cta">Explore moods</a>
+    </div>
+  </div>
+
+  <script>
+    // Activate columns on hover (no jQuery needed)
+    (function(){
+      var cols = document.querySelectorAll('.container_page_1 .column');
+      cols.forEach(function(col){
+        col.addEventListener('mouseover', function(){
+          cols.forEach(function(c){ c.classList.remove('active'); });
+          col.classList.add('active');
+        });
+      });
+    })();
+  </script>
+
+  <style>
+    /* Styles for the mood columns intro */
+    body { margin: 0; padding: 0; }
+    .container_page_1 { width: 100%; height: 100vh; overflow: hidden; position: relative; }
+    /* Use dynamic viewport height on supported browsers (better on mobile) */
+    @supports (height: 100dvh) {
+      .container_page_1 { height: 100dvh; }
+    }
+    .container_page_1 .column { width: 20%; height: 100%; float: left; border-right: 2px solid rgba(0, 0, 0, 0.5); box-sizing: border-box; z-index: 1; }
+    .container_page_1 .column:last-child { border-right: none; }
+    .container_page_1 .column .content { position: relative; height: 100%; }
+    .container_page_1 .column .content h1 { position: absolute; top: 50%; transform: translateY(-50%); width: 100%; background: rgba(0, 0, 0, .1); text-align: center; margin: 0; padding: 0; color: rgba(255, 255, 255, .85); font-size: 3.5em; border-top: 2px solid rgba(0, 0, 0, 0.5); border-bottom: 2px solid rgba(0, 0, 0, 0.5); }
+    .container_page_1 .column .content h1.relaxed { font-size: 3.5em; }
+    .container_page_1 .column .content .box { position: absolute; top: 50%; transform: translateY(100%); box-sizing: border-box; padding: 24px; background: rgba(255, 255, 255, 1); text-align: center; transition: 0.5s; opacity: 0; z-index: 1; border-radius: 8px; max-width: 90%; left: 50%; transform-origin: center; }
+    .container_page_1 .column.active .content .box { opacity: 1; transform: translate(-50%, -50%); }
+    .container_page_1 .column .content .box h2 { margin: 0 0 8px; font-size: 22px; color: #262626; }
+    .container_page_1 .column .content .box p { color: #262626; font-size: 16px; margin: 0; }
+    .container_page_1 .column .bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; filter: brightness(0.85); }
+    .container_page_1 .column.active .bg.bg1 { background: url('{{ url_for('static', filename='cc91ed4ddd4a7394e91c8d1e76af308b.jpg') }}'); background-size: cover; background-position: center; transition: 0.5s; }
+    .container_page_1 .column.active .bg.bg2 { background: url('{{ url_for('static', filename='de18fedc3a18ae111943cf36fdc8967a.jpg') }}'); background-size: cover; background-attachment: fixed; background-position: center; transition: 0.5s; }
+    .container_page_1 .column.active .bg.bg3 { background: url('{{ url_for('static', filename='e63565dc2d6b82b162e3a17329614181.jpg') }}'); background-size: cover; background-attachment: fixed; background-position: center; transition: 0.5s; }
+    .container_page_1 .column.active .bg.bg4 { background: url('{{ url_for('static', filename='1891b3fd114cdf8f93af4633958ed49c.jpg') }}'); background-size: cover; background-attachment: fixed; background-position: center; transition: 0.5s; }
+    .container_page_1 .column.active .bg.bg5 { background: url('{{ url_for('static', filename='4000059775ba77e492ce3ae907e825cd.jpg') }}'); background-size: cover; background-attachment: fixed; background-position: center; transition: 0.5s; }
+
+    /* Embedded header/CTA sizing within mood section */
+    .container_page_1 .wrap { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 2; }
+    .container_page_1 .wrap-inline { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 2; }
+    .container_page_1 .wrap h1, .container_page_1 .wrap-inline h1 { font-size: 6vmin; -webkit-text-stroke-width: calc(var(--stroke-width) / 2); }
+    .container_page_1 .wrap h2, .container_page_1 .wrap-inline h2 { font-size: 2.2vmin; }
+    .container_page_1 .wrap .cta, .container_page_1 .wrap-inline .cta { margin-top: 1.6vmin; padding: 10px 14px; font-size: 0.95rem; }
+
+    /* CTA button styles */
+    .cta { display: inline-block; margin-top: 2vmin; padding: 12px 18px; background: #00a2ff; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; letter-spacing: 0.02em; box-shadow: 0 6px 16px rgba(0,162,255,0.35); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .cta:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(0,162,255,0.45); }
+    .cta:active { transform: translateY(0); box-shadow: 0 6px 16px rgba(0,162,255,0.35); }
+  </style>
+</body>
+</html>

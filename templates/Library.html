@@ -464,22 +464,26 @@ audio {
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Add event listeners to all audio elements
+            // Attach handler to all audio elements; work with varying markup
             document.querySelectorAll('audio').forEach(function(audio) {
                 audio.addEventListener('play', function() {
-                    // Get song information from parent elements
-                    const playerDiv = this.closest('.music-player');
-                    if (!playerDiv) return;
-                    
-                    const songTitle = playerDiv.getAttribute('data-song-title') || playerDiv.querySelector('h3').textContent.split(' - ')[1] || 'Unknown';
-                    const artist = playerDiv.getAttribute('data-artist') || playerDiv.querySelector('h3').textContent.split(' - ')[0] || 'Unknown';
-                    const albumCover = playerDiv.getAttribute('data-album-cover') || playerDiv.querySelector('img').src.split('/').pop();
-                    const audioFile = this.querySelector('source').src.split('/').pop();
-                    
-                    // Send data to server
-                    // Extract mood from paragraph text if available
-                    const moodText = playerDiv.querySelector('p') ? playerDiv.querySelector('p').textContent.split('•')[0].trim() : 'Mixed';
-                    
+                    // Find a reasonable container even if .music-player is missing
+                    const container = this.closest('.music-player') || this.closest('div') || this.parentElement;
+                    if (!container) return;
+
+                    const titleEl = container.querySelector('h3');
+                    const moodEl = container.querySelector('p');
+                    const imgEl = container.querySelector('img');
+
+                    const rawTitle = titleEl ? titleEl.textContent.trim() : '';
+                    const artist = rawTitle.includes('-') ? rawTitle.split('-')[0].trim() : (container.getAttribute('data-artist') || 'Unknown');
+                    const songTitle = rawTitle.includes('-') ? rawTitle.split('-')[1].trim() : (container.getAttribute('data-song-title') || 'Unknown');
+                    const albumCover = (container.getAttribute('data-album-cover') || (imgEl ? imgEl.src.split('/').pop() : 'default.jpg'));
+                    const audioFile = this.querySelector('source')?.src?.split('/').pop() || '';
+
+                    const moodTextRaw = moodEl ? moodEl.textContent : '';
+                    const mood = (moodTextRaw.split('•')[0] || '').trim() || 'Mixed';
+
                     fetch('/play_song', {
                         method: 'POST',
                         headers: {
@@ -490,12 +494,21 @@ audio {
                             'artist': artist,
                             'album_cover': albumCover,
                             'audio_file': audioFile,
-                            'mood': moodText
+                            'mood': mood
                         })
                     })
-                    .then(response => response.json())
-                    .then(data => console.log('Song tracked:', data))
-                    .catch(error => console.error('Error tracking song:', error));
+                    .then(resp => resp.json().then(data => ({ ok: resp.ok, status: resp.status, data })))
+                    .then(({ ok, status, data }) => {
+                        if (!ok) {
+                            console.warn('❗ Play log refused:', status, data);
+                        } else {
+                            console.log('✅ Mood logged:', data);
+                            // Notify other tabs (Profile) to refresh mood data
+                            try { const ch = new BroadcastChannel('mood-events'); ch.postMessage({ type:'song_played', t: Date.now() }); } catch(e){}
+                            try { localStorage.setItem('mood_song_played', String(Date.now())); } catch(e){}
+                        }
+                    })
+                    .catch(error => console.error('❌ Error tracking song:', error));
                 });
             });
         });
@@ -513,6 +526,9 @@ audio {
                 <li><a href="{{ url_for('library') }}">Library</a></li>
                 <li><a href="{{ url_for('about') }}">About</a></li>
                 <li><a href="{{ url_for('profile') }}">Profile</a></li>
+                {% if session.get('is_admin') %}
+                <li><a href="{{ url_for('admin') }}">Admin</a></li>
+                {% endif %}
                 {% if session.get('user_id') %}
 <li><a href="{{ url_for('logout') }}">Logout</a></li>
 {% else %}
@@ -528,23 +544,23 @@ audio {
     <h2>Choose Your Mood</h2>
     <div class="mood-container">
         <div class="mood-item">
-            <img class="hero-image" src="{{ url_for('static', filename='images/cc91ed4ddd4a7394e91c8d1e76af308b.jpg') }}" alt="Happy Music">
+            <img class="hero-image" src="{{ url_for('static', filename='cc91ed4ddd4a7394e91c8d1e76af308b.jpg') }}" alt="Happy Music">
             <button class="happy caption" onclick="scrollToHappySection()"><span>Happy</span></button>
         </div>
         <div class="mood-item">
-            <img class="hero-image" src="{{ url_for('static', filename='images/de18fedc3a18ae111943cf36fdc8967a.jpg') }}" alt="Relaxing Music">
+            <img class="hero-image" src="{{ url_for('static', filename='de18fedc3a18ae111943cf36fdc8967a.jpg') }}" alt="Relaxing Music">
             <button class="relaxed caption" onclick="scrollToRelaxedSection()"><span>Relaxed</span></button>
         </div>
         <div class="mood-item">
-            <img class="hero-image" src="{{ url_for('static', filename='images/e63565dc2d6b82b162e3a17329614181.jpg') }}" alt="Love Music">
+            <img class="hero-image" src="{{ url_for('static', filename='e63565dc2d6b82b162e3a17329614181.jpg') }}" alt="Love Music">
             <button class="love caption" onclick="scrollToLoveSection()"><span>Love</span></button>
         </div>
         <div class="mood-item">
-            <img class="hero-image" src="{{ url_for('static', filename='images/1891b3fd114cdf8f93af4633958ed49c.jpg') }}" alt="Sad Music">
+            <img class="hero-image" src="{{ url_for('static', filename='1891b3fd114cdf8f93af4633958ed49c.jpg') }}" alt="Sad Music">
             <button class="sad caption" onclick="scrollToSadSection()"><span>Sad</span></button>
         </div>
         <div class="mood-item">
-            <img class="hero-image" src="{{ url_for('static', filename='images/4000059775ba77e492ce3ae907e825cd.jpg') }}" alt="Anger Music">
+            <img class="hero-image" src="{{ url_for('static', filename='4000059775ba77e492ce3ae907e825cd.jpg') }}" alt="Anger Music">
             <button class="anger caption" onclick="scrollToAngerSection()"><span>Anger</span></button>
         </div>
     </div>
@@ -552,7 +568,7 @@ audio {
 
 <section id="happy-section" class="artist-profile">
     <div class="artist-header">
-        <img src="{{ url_for('static', filename='images/cc91ed4ddd4a7394e91c8d1e76af308b.jpg') }}" alt="Artist Profile" class="artist-image">
+        <img src="{{ url_for('static', filename='cc91ed4ddd4a7394e91c8d1e76af308b.jpg') }}" alt="Artist Profile" class="artist-image">
         <div class="artist-info">
             <h1 class="artist-name happy_text">Happy Music</h1>
             <p class="monthly-listeners">7.4M monthly listeners</p>
@@ -579,9 +595,8 @@ audio {
 
 
             <!-- 1 -->
-             {% for s in songs_by_mood.get('Happy', []) %}
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/966f7cf933f1d7e833a300629800732e.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='966f7cf933f1d7e833a300629800732e.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Justin Timberlake - CAN'T STOP THE FEELING</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 3:56</p>
@@ -590,11 +605,10 @@ audio {
                     </audio>
                 </div>
             </div>
-             {% endfor %}
 
             <!-- 2 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Chappel Roan - Hot To Go.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Chappel Roan - Hot To Go.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Chappel Roan - Hot To Go</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 3:04</p>
@@ -606,7 +620,7 @@ audio {
 
             <!-- 3 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/ROSE & Bruno Mars - APT.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='ROSE & Bruno Mars - APT.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">ROSE & Bruno Mars - APT</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 2:50</p>
@@ -618,7 +632,7 @@ audio {
 
             <!-- 4 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Meghan Trainer - Dear Future Husband.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Meghan Trainer - Dear Future Husband.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Meghan Trainer - Dear Future Husband</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 3:20</p>
@@ -630,7 +644,7 @@ audio {
 
             <!-- 5 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Jennie, Doechii - ExtraL.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Jennie, Doechii - ExtraL.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Jennie, Doechii - ExtraL</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 3:40</p>
@@ -642,7 +656,7 @@ audio {
 
             <!-- 6 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Surfaces - Sheesh!.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Surfaces - Sheesh!.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Surfaces - Sheesh!</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 2:28</p>
@@ -666,7 +680,7 @@ audio {
 
             <!-- 8 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Harry Syles - As It Was.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Harry Syles - As It Was.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Harry Styles - As It Was</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 2:42</p>
@@ -678,7 +692,7 @@ audio {
 
             <!-- 9 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/laufey -From The Start.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='laufey -From The Start.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Laufey - From The Start</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 2:51</p>
@@ -690,7 +704,7 @@ audio {
 
             <!-- 10 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Chappel Roan - Pink Pony Club.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Chappel Roan - Pink Pony Club.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Chappel Roan - Pink Pony Club</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 4:16</p>
@@ -702,7 +716,7 @@ audio {
 
             <!-- 11 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Dua Lipa - Dance The Night.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Dua Lipa - Dance The Night.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Dua Lipa - Dance The Night</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 2:53</p>
@@ -714,7 +728,7 @@ audio {
 
             <!-- 12 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/8f1797dd9c75657d4d589f2ee1a47bb4.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='8f1797dd9c75657d4d589f2ee1a47bb4.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Icona Pop - All Night</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 3:07</p>
@@ -726,7 +740,7 @@ audio {
 
             <!-- 13 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Lawrence - Whatcha Want.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Lawrence - Whatcha Want.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Lawrence - Whatcha Want</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 4:47</p>
@@ -738,7 +752,7 @@ audio {
 
             <!-- 14 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Pharrell Williams - Happy.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Pharrell Williams - Happy.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Pharrell Williams - Happy</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Happy • 4:00</p>
@@ -751,43 +765,7 @@ audio {
         </div>
     </div>
 </section>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const players = document.querySelectorAll('.music-player audio');
 
-    players.forEach(audio => {
-        audio.addEventListener('play', () => {
-            const container = audio.closest('.music-player');
-            const titleElement = container.querySelector('h3');
-            const moodElement = container.querySelector('p');
-            const imgElement = container.querySelector('img');
-
-            const songTitle = titleElement ? titleElement.innerText.trim() : 'Unknown';
-            const moodText = moodElement ? moodElement.innerText.trim() : '';
-            const audioFile = audio.querySelector('source')?.getAttribute('src')?.split('/').pop() || '';
-            const albumCover = imgElement ? imgElement.getAttribute('src').split('/').pop() : 'default.jpg';
-
-            const mood = moodText.split('•')[0].trim();
-            const artist = songTitle.includes('-') ? songTitle.split('-')[0].trim() : 'Unknown Artist';
-
-            fetch("/play_song", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({
-                    song_title: songTitle,
-                    artist: artist,
-                    album_cover: albumCover,
-                    audio_file: audioFile,
-                    mood: mood
-                })
-            })
-            .then(response => response.json())
-            .then(data => console.log("✅ Mood logged:", data))
-            .catch(error => console.error("❌ Error:", error));
-        });
-    });
-});
-</script>
 
 
 <script>
@@ -806,7 +784,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <section id="relaxed-section" class="artist-profile">
     <div class="artist-header">
-        <img src="{{ url_for('static', filename='images/de18fedc3a18ae111943cf36fdc8967a.jpg') }}" alt="Artist Profile" class="artist-image">
+        <img src="{{ url_for('static', filename='de18fedc3a18ae111943cf36fdc8967a.jpg') }}" alt="Artist Profile" class="artist-image">
         <div class="artist-info">
             <h1 class="artist-name relaxed_text">Relaxed Music</h1>
             <p class="monthly-listeners">7.4M monthly listeners</p>
@@ -820,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 1 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Joji - Glimpse Of Us.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Joji - Glimpse Of Us.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Joji - Glimpse Of Us</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 3:53</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube__x3UltzBxjw_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -828,7 +806,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 2 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Liana flores - rises the moon.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Liana flores - rises the moon.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Liana flores - rises the moon</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 3:41</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_1Xddn3kJhhY_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -836,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 3 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Powfu - death bed.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Powfu - death bed.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Powfu - death bed</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 2:53</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_4N-WFXpBjpc_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -844,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 4 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Taylor Swift - All Too Well.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Taylor Swift - All Too Well.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Taylor Swift - All Too Well</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 5:30</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_9OQBDdNHmXo_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -852,7 +830,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 5 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Conan Gray - Heather.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Conan Gray - Heather.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Conan Gray - Heather</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 3:25</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_24u3NoPvgMw_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -860,7 +838,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 6 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Kaashi Paige - Love Songs(bunos).jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Kaashi Paige - Love Songs(bunos).jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Kaashi Paige - Love Songs (bonus)</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 2:28</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_a7ms3r-qt0E_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -868,7 +846,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 7 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Bilie Eilish - my future.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Bilie Eilish - my future.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Billie Eilish - my future</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 3:49</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_Dm9Zf1WYQ_A_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -876,7 +854,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 8 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Billie Eilish - Halley\'s Comet.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Billie Eilish - Halley\'s Comet.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Billie Eilish - Halley's Comet</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 3:51</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_ix1HjQUW5dw_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -884,7 +862,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 9 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Lana Del Rey - Say Yes To Heaven.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Lana Del Rey - Say Yes To Heaven.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Lana Del Rey - Say Yes To Heaven</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 3:29</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_MiAoetOXKcY_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -892,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 10 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Laufey - Let you Break My Heart Again.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Laufey - Let you Break My Heart Again.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Laufey - Let you Break My Heart Again</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 4:31</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_NLphEFOyoqM_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -900,7 +878,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 11 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Conon Gray - Astronomy.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Conon Gray - Astronomy.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Conon Gray - Astronomy</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 4:10</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_PNKxAWiu4Fc_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -908,7 +886,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 12 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/matthew hall - Home.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='matthew hall - Home.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">matthew hall - Home</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 4:25</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_SECjCR1__ao_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -916,7 +894,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 13 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/SZA - Nobody Gets ME.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='SZA - Nobody Gets ME.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">SZA - Nobody Gets ME</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 2:58</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_tOTr9CCutiE_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -924,7 +902,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 14 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Clairo - Bubble Gum.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Clairo - Bubble Gum.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Clairo - Bubble Gum</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 2:56</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_vSwra1ldnyA_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -932,7 +910,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 15 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Sweet - Cigarette After Sex.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Sweet - Cigarette After Sex.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Sweet - Cigarette After Sex</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Relaxed • 4:48</p>
                 <audio controls style="width:100%;height:30px;"><source src="{{ url_for('static', filename='youtube_XsagL-UZW1U_audio.mp3') }}" type="audio/mpeg"></audio>
@@ -943,43 +921,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </section>
 
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const players = document.querySelectorAll('.music-player audio');
 
-    players.forEach(audio => {
-        audio.addEventListener('play', () => {
-            const container = audio.closest('.music-player');
-            const titleElement = container.querySelector('h3');
-            const moodElement = container.querySelector('p');
-            const imgElement = container.querySelector('img');
-
-            const songTitle = titleElement ? titleElement.innerText.trim() : 'Unknown';
-            const moodText = moodElement ? moodElement.innerText.trim() : '';
-            const audioFile = audio.querySelector('source')?.getAttribute('src')?.split('/').pop() || '';
-            const albumCover = imgElement ? imgElement.getAttribute('src').split('/').pop() : 'default.jpg';
-
-            const mood = moodText.split('•')[0].trim();
-            const artist = songTitle.includes('-') ? songTitle.split('-')[0].trim() : 'Unknown Artist';
-
-            fetch("/play_song", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({
-                    song_title: songTitle,
-                    artist: artist,
-                    album_cover: albumCover,
-                    audio_file: audioFile,
-                    mood: mood
-                })
-            })
-            .then(response => response.json())
-            .then(data => console.log("✅ Mood logged:", data))
-            .catch(error => console.error("❌ Error:", error));
-        });
-    });
-});
-</script>
 
 <script>
     function scrollToRelaxedSection() {
@@ -996,7 +938,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <section id="love-section" class="artist-profile">
     <div class="artist-header">
-        <img src="{{ url_for('static', filename='images/e63565dc2d6b82b162e3a17329614181.jpg') }}" alt="Artist Profile" class="artist-image">
+        <img src="{{ url_for('static', filename='e63565dc2d6b82b162e3a17329614181.jpg') }}" alt="Artist Profile" class="artist-image">
         <div class="artist-info">
             <h1 class="artist-name love_text">Love Music</h1>
             <p class="monthly-listeners">7.4M monthly listeners</p>
@@ -1010,7 +952,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 1 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Avicii - Waiting For Love.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Avicii - Waiting For Love.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Avicii - Waiting For Love</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 3:51</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1020,7 +962,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 2 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Clean Bandit - Symphony.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Clean Bandit - Symphony.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Clean Bandit - Symphony</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 3:38</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1030,7 +972,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 3 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Mecah Edwards - Moments.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Mecah Edwards - Moments.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Mecah Edwards - Moments</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 4:52</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1040,7 +982,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 4 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/hiccup - valley.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='hiccup - valley.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">hiccup - valley</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 2:42</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1050,7 +992,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 5 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/BØRNS - Electric Love.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='BØRNS - Electric Love.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">BØRNS - Electric Love</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 4:05</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1060,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 6 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Ed Sheeran - Perfect.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Ed Sheeran - Perfect.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Ed Sheeran - Perfect</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 4:23</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1070,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 7 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Ellie Goulding - Love Me LIke You Do.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Ellie Goulding - Love Me LIke You Do.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Ellie Goulding - Love Me Like You Do</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 4:14</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1080,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 8 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;">
-                <img src="{{ url_for('static', filename='images/Shawn Mendes, Camilia Cbello - Senorita.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Shawn Mendes, Camilia Cbello - Senorita.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Shawn Mendes, Camila Cabello - Senorita</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 3:11</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1090,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 9 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;">
-                <img src="{{ url_for('static', filename='images/Kali Unchis - Moonlight.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Kali Unchis - Moonlight.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Kali Uchis - Moonlight</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 3:07</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1100,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 10 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;">
-                <img src="{{ url_for('static', filename='images/Selena Gomez - Love Like a Love Song.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Selena Gomez - Love Like a Love Song.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Selena Gomez - Love Like a Love Song</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 3:17</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1110,7 +1052,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 11 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;">
-                <img src="{{ url_for('static', filename='images/Stephen Sanchez - Until I Found You.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Stephen Sanchez - Until I Found You.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Stephen Sanchez - Until I Found You</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 2:54</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1120,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 12 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;">
-                <img src="{{ url_for('static', filename='images/John Legend - All Of Me.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='John Legend - All Of Me.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">John Legend - All Of Me</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 4:29</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1130,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 13 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;">
-                <img src="{{ url_for('static', filename='images/Christina Perri - A Thousand Years.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Christina Perri - A Thousand Years.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Christina Perri - A Thousand Years</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 4:45</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1140,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 14 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;">
-                <img src="{{ url_for('static', filename='images/Ed Sheeran - Galeway Girl.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Ed Sheeran - Galeway Girl.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Ed Sheeran - Galway Girl</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 3:20</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1150,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 15 -->
             <div style="display:flex;flex-direction:column;align-items:center;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;">
-                <img src="{{ url_for('static', filename='images/Lana Del Rey - Summertime Sadness.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Lana Del Rey - Summertime Sadness.jpg') }}" alt="Album Cover" style="border-radius:5px;width:60%;margin-bottom:10px;">
                 <h3 style="font-size:14px;color:white;margin:0;text-align:center;">Lana Del Rey - Summertime Sadness</h3>
                 <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;text-align:center;">Love • 4:24</p>
                 <audio controls style="width:100%;height:30px;">
@@ -1162,43 +1104,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </section>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const players = document.querySelectorAll('.music-player audio');
 
-    players.forEach(audio => {
-        audio.addEventListener('play', () => {
-            const container = audio.closest('.music-player');
-            const titleElement = container.querySelector('h3');
-            const moodElement = container.querySelector('p');
-            const imgElement = container.querySelector('img');
-
-            const songTitle = titleElement ? titleElement.innerText.trim() : 'Unknown';
-            const moodText = moodElement ? moodElement.innerText.trim() : '';
-            const audioFile = audio.querySelector('source')?.getAttribute('src')?.split('/').pop() || '';
-            const albumCover = imgElement ? imgElement.getAttribute('src').split('/').pop() : 'default.jpg';
-
-            const mood = moodText.split('•')[0].trim();
-            const artist = songTitle.includes('-') ? songTitle.split('-')[0].trim() : 'Unknown Artist';
-
-            fetch("/play_song", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({
-                    song_title: songTitle,
-                    artist: artist,
-                    album_cover: albumCover,
-                    audio_file: audioFile,
-                    mood: mood
-                })
-            })
-            .then(response => response.json())
-            .then(data => console.log("✅ Mood logged:", data))
-            .catch(error => console.error("❌ Error:", error));
-        });
-    });
-});
-</script>
 
 
 <script>
@@ -1215,7 +1121,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <section id="sad-section" class="artist-profile">
     <div class="artist-header">
-        <img src="{{ url_for('static', filename='images/1891b3fd114cdf8f93af4633958ed49c.jpg') }}" alt="Artist Profile" class="artist-image">
+        <img src="{{ url_for('static', filename='1891b3fd114cdf8f93af4633958ed49c.jpg') }}" alt="Artist Profile" class="artist-image">
         <div class="artist-info">
             <h1 class="artist-name sad_text">Sad Music</h1>
             <p class="monthly-listeners">7.4M monthly listeners</p>
@@ -1229,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 1 -->
             <div class="music-player" style="display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <img src="{{ url_for('static', filename='images/Surjan Stevens - fourth Of July.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Surjan Stevens - fourth Of July.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Surjan Stevens - Fourth Of July</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 4:38</p>
@@ -1241,7 +1147,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 2 -->
             <div class="music-player">
-                <img src="{{ url_for('static', filename='images/Billie Eilish - Everything i wanted.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Billie Eilish - Everything i wanted.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Billie Eilish - Everything I Wanted</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 4:02</p>
@@ -1253,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 3 -->
             <div class="music-player">
-                <img src="{{ url_for('static', filename='images/Billie Eilish - WILDFRLOWER.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+                <img src="{{ url_for('static', filename='Billie Eilish - WILDFRLOWER.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Billie Eilish - Wildflower</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 4:21</p>
@@ -1263,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
   <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/Billie Eilish - TV.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Billie Eilish - TV.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">Billie Eilish - TV</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 4:45</p>
@@ -1275,7 +1181,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 2 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/D4Vd - Here With Me.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='D4Vd - Here With Me.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">D4Vd - Here With Me</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 4:01</p>
@@ -1287,9 +1193,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 3 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/RIO ROMO - NOTHING\'S NEW.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Rio Romeo - Nothing\'s New.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
-          <h3 style="font-size:14px;color:white;margin:0;">RIO ROMO - Nothing's New</h3>
+          <h3 style="font-size:14px;color:white;margin:0;">Rio Romeo - Nothing's New</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 3:28</p>
           <audio controls style="width:100%;height:30px;">
             <source src="{{ url_for('static', filename='youtube_5e4INH1yr9c_audio.mp3') }}" type="audio/mpeg">
@@ -1299,7 +1205,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 4 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/Billie Eilish - What Was I Made For.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Billie Eilish - What Was I Made For.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">Billie Eilish - What Was I Made For</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 4:08</p>
@@ -1311,7 +1217,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 5 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/Billie Eilish - When The Party\'s Over.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Billie Eilish - When The Party\'s Over.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">Billie Eilish - When The Party's Over</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 4:13</p>
@@ -1323,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 6 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/Tom Odell - another Love.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Tom Odell - another Love.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">Tom Odell - Another Love</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 4:01</p>
@@ -1335,7 +1241,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 7 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/alek Olsen - someday i\'ll get it.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Alek Olsen - Someday I\'ll Get It.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">Alek Olsen - Someday I'll Get It</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 1:34</p>
@@ -1347,7 +1253,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 8 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/Billie Eilish - Lovely.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Billie Eilish - Lovely.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">Billie Eilish - Lovely</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 3:20</p>
@@ -1359,7 +1265,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 9 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/Neena ROSE - Nothing.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Neena ROSE - Nothing.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">Neena Rose - Nothing</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 2:51</p>
@@ -1371,7 +1277,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 10 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/James Arthur - Train Wreck.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='James Arthur - Train Wreck.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">James Arthur - Train Wreck</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 3:26</p>
@@ -1383,7 +1289,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 11 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/Paloma Faith - Only LOve Can Hurt Like This.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Paloma Faith - Only LOve Can Hurt Like This.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">Paloma Faith - Only Love Can Hurt Like This</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 3:52</p>
@@ -1395,7 +1301,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       <!-- 12 -->
       <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
-        <img src="{{ url_for('static', filename='images/Vancouver Sleep Clinic - somone to stay.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+        <img src="{{ url_for('static', filename='Vancouver Sleep Clinic - somone to stay.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
         <div style="width:100%;text-align:left;">
           <h3 style="font-size:14px;color:white;margin:0;">Vancouver Sleep Clinic - Someone To Stay</h3>
           <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Sad • 4:14</p>
@@ -1405,46 +1311,26 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
       </div>
 
+      {# Dynamic database songs for Sad mood #}
+      {% if songs_by_mood.get('Sad') %}
+        {% for s in songs_by_mood['Sad'] %}
+          <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;">
+            <img src="{{ url_for('static', filename=s['album_cover']) }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+            <div style="width:100%;text-align:left;">
+              <h3 style="font-size:14px;color:white;margin:0;">{{ s['song_title'] }} - {{ s['artist'] }}</h3>
+              <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">{{ s['mood'] }} • {{ s['duration'] or '—' }}</p>
+              <audio controls style="width:100%;height:30px;">
+                <source src="{{ url_for('static', filename=s['audio_file']) }}" type="audio/mpeg">
+              </audio>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+
     </div>
   </div>
 </section>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const players = document.querySelectorAll('.music-player audio');
 
-    players.forEach(audio => {
-        audio.addEventListener('play', () => {
-            const container = audio.closest('.music-player');
-            const titleElement = container.querySelector('h3');
-            const moodElement = container.querySelector('p');
-            const imgElement = container.querySelector('img');
-
-            const songTitle = titleElement ? titleElement.innerText.trim() : 'Unknown';
-            const moodText = moodElement ? moodElement.innerText.trim() : '';
-            const audioFile = audio.querySelector('source')?.getAttribute('src')?.split('/').pop() || '';
-            const albumCover = imgElement ? imgElement.getAttribute('src').split('/').pop() : 'default.jpg';
-
-            const mood = moodText.split('•')[0].trim();
-            const artist = songTitle.includes('-') ? songTitle.split('-')[0].trim() : 'Unknown Artist';
-
-            fetch("/play_song", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({
-                    song_title: songTitle,
-                    artist: artist,
-                    album_cover: albumCover,
-                    audio_file: audioFile,
-                    mood: mood
-                })
-            })
-            .then(response => response.json())
-            .then(data => console.log("✅ Mood logged:", data))
-            .catch(error => console.error("❌ Error:", error));
-        });
-    });
-});
-</script>
 
 <script>
     function scrollToSadSection() {
@@ -1460,7 +1346,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <!---------------------------------anger Music---------------------------------->
 <section id="anger-section" class="artist-profile">
     <div class="artist-header">
-        <img src="{{ url_for('static', filename='images/4000059775ba77e492ce3ae907e825cd.jpg') }}" alt="Artist Profile" class="artist-image">
+        <img src="{{ url_for('static', filename='4000059775ba77e492ce3ae907e825cd.jpg') }}" alt="Artist Profile" class="artist-image">
         <div class="artist-info">
             <h1 class="artist-name Anger_text">Anger Music</h1>
             <p class="monthly-listeners">7.4M monthly listeners</p>
@@ -1473,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 1 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Lizzo - Thuth Hurts.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Lizzo - Thuth Hurts.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Lizzo - Truth Hurts</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 2:53</p>
@@ -1485,7 +1371,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 2 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Ashnikko - Daisy.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Ashnikko - Daisy.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Ashnikko - Daisy</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 2:29</p>
@@ -1497,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 3 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Billie Eilish - Therefor.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Billie Eilish - Therefor.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Billie Eilish - Therefore I Am</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 2:53</p>
@@ -1509,7 +1395,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 4 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/GAYLE - abcdfu.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='GAYLE - abcdfu.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">GAYLE - abcdfu</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 2:48</p>
@@ -1521,7 +1407,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 5 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Bohnes - Middle Finger.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Bohnes - Middle Finger.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Bohnes - Middle Finger</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 3:57</p>
@@ -1533,7 +1419,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 6 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Little Simz - Venom.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Little Simz - Venom.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Little Simz - Venom</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 2:27</p>
@@ -1545,7 +1431,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 7 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Sam Tinnesz - Play With Fire.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Sam Tinnesz - Play With Fire.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Sam Tinnesz - Play With Fire</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 3:01</p>
@@ -1557,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 8 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Lola Blanc - Angry too.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Lola Blanc - Angry too.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Lola Blanc - Angry Too</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 3:20</p>
@@ -1569,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 9 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Missio - Twisted.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Missio - Twisted.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Missio - Twisted</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 3:40</p>
@@ -1581,7 +1467,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 10 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Halsey - Without.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Halsey - Without.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Halsey - Without Me</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 3:23</p>
@@ -1593,7 +1479,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 11 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/grandson - Blood  Water.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='grandson - Blood  Water.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">grandson - Blood // Water</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 3:36</p>
@@ -1605,7 +1491,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 12 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/EMELINE - Cinderella\'s dead.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='EMELINE - Cinderella\'s dead.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">EMELINE - Cinderella's Dead</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 2:00</p>
@@ -1617,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 13 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Olivia Rodrigo - Good 4 u.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Olivia Rodrigo - Good 4 u.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Olivia Rodrigo - Good 4 U</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 2:58</p>
@@ -1629,7 +1515,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 14 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Dua Lipa - Chill With Me.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Dua Lipa - Chill With Me.jpg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Dua Lipa - Chill With Me</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 3:50</p>
@@ -1641,7 +1527,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             <!-- 15 -->
             <div class="music-player" style="text-align:center;">
-                <img src="{{ url_for('static', filename='images/Miley Cyrus - WTF Do I Know.jpeg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
+                <img src="{{ url_for('static', filename='Miley Cyrus - WTF Do I Know.jpeg') }}" alt="Album Cover" style="border-radius:5px;width:50%;display:block;margin:0 auto 10px;">
                 <div style="text-align:left;">
                     <h3 style="font-size:14px;color:white;margin:0;">Miley Cyrus - WTF Do I Know</h3>
                     <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">Anger • 2:53</p>
@@ -1663,46 +1549,27 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 </script>
+
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const players = document.querySelectorAll('.music-player audio');
-
-    players.forEach(audio => {
-        audio.addEventListener('play', () => {
-            const container = audio.closest('.music-player');
-            const titleElement = container.querySelector('h3');
-            const moodElement = container.querySelector('p');
-            const imgElement = container.querySelector('img');
-
-            const songTitle = titleElement ? titleElement.innerText.trim() : 'Unknown';
-            const moodText = moodElement ? moodElement.innerText.trim() : '';
-            const audioFile = audio.querySelector('source')?.getAttribute('src')?.split('/').pop() || '';
-            const albumCover = imgElement ? imgElement.getAttribute('src').split('/').pop() : 'default.jpg';
-
-            // 🧠 Extract mood (e.g. "Sad" from "Sad • 4:21")
-            const mood = moodText.split('•')[0].trim();
-            const artist = songTitle.includes('-') ? songTitle.split('-')[0].trim() : 'Unknown Artist';
-
-            // 📡 Send data to backend
-            fetch("/play_song", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: new URLSearchParams({
-                    song_title: songTitle,
-                    artist: artist,
-                    album_cover: albumCover,
-                    audio_file: audioFile,
-                    mood: mood
-                })
-            })
-            .then(response => response.json())
-            .then(data => console.log("✅ Mood logged:", data))
-            .catch(error => console.error("❌ Error:", error));
-        });
+// Broadcast to other tabs when a song starts playing in the Library
+(function(){
+  let channel = null;
+  try { channel = new BroadcastChannel('mood-events'); } catch (e) { channel = null; }
+  function notify() {
+    try { if (channel) channel.postMessage({ type: 'song_played', t: Date.now() }); } catch (e) {}
+    try { localStorage.setItem('mood_song_played', String(Date.now())); } catch (e) {}
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('audio').forEach(function(audio){
+      audio.addEventListener('play', function(){
+        // slight delay to allow backend write
+        setTimeout(notify, 600);
+      });
     });
-});
+  });
+})();
 </script>
-
 
     <!---------------------------------footer---------------------------------->
  <footer class="footer">
@@ -1730,5 +1597,53 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 </footer>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('audio').forEach(function(audio) {
+      audio.addEventListener('play', async function () {
+        const container = this.closest('.music-player') || this.closest('div') || this.parentElement;
+        if (!container) return;
+
+        const titleEl = container.querySelector('h3');
+        const moodEl = container.querySelector('p');
+        const imgEl = container.querySelector('img');
+
+        const rawTitle = titleEl ? titleEl.textContent.trim() : '';
+        const artist = rawTitle.includes('-') ? rawTitle.split('-')[0].trim() : (container.getAttribute('data-artist') || 'Unknown');
+        const songTitle = rawTitle.includes('-') ? rawTitle.split('-')[1].trim() : (container.getAttribute('data-song-title') || rawTitle || 'Unknown');
+        const albumCover = (container.getAttribute('data-album-cover') || (imgEl ? imgEl.getAttribute('src').split('/').pop() : 'defultimage.jpg'));
+        const audioFile = this.querySelector('source')?.getAttribute('src')?.split('/').pop() || '';
+
+        const moodTextRaw = moodEl ? moodEl.textContent : '';
+        const mood = (moodTextRaw.split('•')[0] || '').trim() || '';
+
+        try {
+          const res = await fetch('/play_song', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: songTitle,
+              artist: artist,
+              image: albumCover,
+              audio_file: audioFile,
+              mood: mood
+            })
+          });
+
+          if (res.ok) {
+            // Notify other tabs/pages
+            try { new BroadcastChannel('mood-events').postMessage({ type: 'song_played', t: Date.now() }); } catch(e){}
+            try { localStorage.setItem('mood_song_played', String(Date.now())); } catch(e){}
+          } else {
+            console.warn('play_song returned non-OK', res.status);
+          }
+        } catch (err) {
+          console.error('Error sending /play_song', err);
+        }
+      });
+    });
+  });
+  </script>
 </body>
 </html>
+

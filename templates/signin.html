@@ -229,18 +229,18 @@
     </header>
 
     <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <p>{{ message }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+    {% set flashed = get_flashed_messages(with_categories=true) %}
+         {% if flashed %}
+             <div class="flash-messages" style="margin-top: 160px;">
+                 {% for category, message in flashed %}
+                     <p>{{ message }}</p>
+                 {% endfor %}
+             </div>
+         {% endif %}
 
-    <div class="signin-container">
-        <h1>Sign In to MoodTune</h1>
+    <section class="signin-section" aria-labelledby="signin-title" style="margin-top: {% if flashed %}8px{% else %}100px{% endif %};">
+        <div class="signin-container">
+        <h1 id="signin-title">Sign In to MoodTune</h1>
         <form method="POST" action="{{ url_for('signin') }}">
             <div class="form-group">
                 <label for="email">Email or username</label>
@@ -260,7 +260,8 @@
             <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
             <p><a href="#">Forgot your password?</a></p>
         </div>
-    </div>
+        </div>
+    </section>
 
     <div class="footer">
         <p>&copy; 2025 MoodTune. All rights reserved.</p>

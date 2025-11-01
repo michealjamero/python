@@ -169,7 +169,7 @@
 
         .track-list {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 15px;
         }
 
@@ -401,6 +401,45 @@
             color: #5f6df1;
             text-shadow: 0 0 5px #4a58db, 0 0 10px #604adb, 0 0 20px#894adb, 0 0 30px #a64adb, 0 0 40px #ff00ff, 0 0 50px #ff00ff, 0 0 75px #ff00ff;
         }
+        /* 🎵 TRENDING ANIMATIONS */
+        .trend-up {
+          color: #00ff88;
+          animation: glowUp 1.2s ease-in-out;
+          font-weight: bold;
+        }
+
+        .trend-down {
+          color: #ff4d4d;
+          animation: glowDown 1.2s ease-in-out;
+          font-weight: bold;
+        }
+
+        .trend-same {
+          color: #ccc;
+        }
+
+        .trend-new {
+          color: #00bfff;
+          font-weight: bold;
+          animation: pulseNew 1.5s infinite;
+        }
+
+        @keyframes glowUp {
+          0% { text-shadow: 0 0 0 #00ff88; }
+          50% { text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88; }
+          100% { text-shadow: 0 0 0 #00ff88; }
+        }
+
+        @keyframes glowDown {
+          0% { text-shadow: 0 0 0 #ff4d4d; }
+          50% { text-shadow: 0 0 10px #ff4d4d, 0 0 20px #ff4d4d; }
+          100% { text-shadow: 0 0 0 #ff4d4d; }
+        }
+
+        @keyframes pulseNew {
+          0%, 100% { opacity: 1; text-shadow: 0 0 5px #00bfff; }
+          50% { opacity: 0.6; text-shadow: 0 0 15px #00bfff; }
+        }
     </style>
 </head>
 <body>
@@ -415,6 +454,9 @@
                     <li><a href="{{ url_for('library') }}">Library</a></li>
                     <li><a href="{{ url_for('about') }}">About</a></li>
                     <li><a href="{{ url_for('profile') }}">Profile</a></li>
+                    {% if session.get('is_admin') %}
+                    <li><a href="{{ url_for('admin') }}">Admin</a></li>
+                    {% endif %}
                     {% if session.get('user_id') %}
                     <li><a href="{{ url_for('logout') }}">Logout</a></li>
                     {% else %}
@@ -425,83 +467,167 @@
         </div>
     </header>
 
-    <!-- ✅ Artist Profile -->
-    <section class="artist-profile">
-        <div class="artist-header">
-            <img src="{{ url_for('static', filename='Untitled design (1).png') }}" alt="Artist Profile" class="artist-image">
-            <div class="artist-info">
-                <h1 class="artist-name">Your Music</h1>
-            </div>
-        </div>
-    </section>
+    <!-- 🌟 Top 3 Artist Carousel (Interactive) --> 
+    <section id="artist-spotlight" style=" 
+        position: relative; 
+        overflow: hidden; 
+        border-radius: 12px; 
+        margin: 60px 20px 30px; 
+        padding: 40px 20px; 
+        min-height: 300px; 
+        text-align: left; 
+        box-shadow: 0 0 30px rgba(200, 100, 255, 0.2); 
+        transition: background 1s ease; 
+      "> 
+      <div id="artist-content" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; position: relative; z-index: 3;"> 
+          <div id="artist-info" style="flex: 1; min-width: 300px;"> 
+              <h2 style="font-size: 1.4em; color: #b3b3b3;">🎵 Top Artists This Week</h2> 
+              <h1 id="artist-name" style="font-size: 3em; margin: 10px 0; color: #fff;">Loading...</h1> 
+              <p id="artist-stats" style="color: #ccc;">Fetching stats...</p> 
+              <button id="play-top-track" style=" 
+                  margin-top: 20px; 
+                  background: #9b4de0; 
+                  color: white; 
+                  border: none; 
+                  border-radius: 50px; 
+                  padding: 12px 28px; 
+                  cursor: pointer; 
+                  font-weight: 600; 
+                  transition: background 0.3s ease; 
+              ">▶ Play Top Song</button> 
+          </div> 
+  
+          <div style="flex: 1; min-width: 280px; display: flex; justify-content: center;"> 
+              <img id="artist-image" src="{{ url_for('static', filename='default_artist.png') }}" 
+                   alt="Artist" style=" 
+                      width: 240px; 
+                      height: 240px; 
+                      border-radius: 18px; 
+                      object-fit: cover; 
+                      box-shadow: 0 12px 28px rgba(0,0,0,0.2); 
+                      transition: opacity 0.5s ease; 
+              "> 
+          </div> 
+      </div> 
+  
+      <div id="artist-glow" style=" 
+          position:absolute; 
+          width:280px;height:280px; 
+          border-radius:50%; 
+          filter:blur(50px); 
+          opacity:0.3; 
+          z-index:1; 
+          transition:background 1s ease; 
+          top:50%; 
+          left:50%; 
+          transform:translate(-50%,-50%); 
+          pointer-events:none; 
+      "></div> 
+      <!-- Navigation Arrows --> 
+      <button id="prev-artist" class="button-62" style=" 
+             position:absolute; top:20px; left:20px; 
+         ">⟵</button> 
+      <button id="next-artist" class="button-62" style=" 
+             position:absolute; top:20px; right:20px; 
+         ">⟶</button> 
+  
+      <!-- Dots --> 
+      <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:8px;"> 
+          <div class="dot" style="width:10px;height:10px;border-radius:50%;background:#888;"></div> 
+          <div class="dot" style="width:10px;height:10px;border-radius:50%;background:#444;"></div> 
+          <div class="dot" style="width:10px;height:10px;border-radius:50%;background:#444;"></div> 
+      </div> 
+  
+      <audio id="artist-audio" controls style="width:100%; margin-top:30px; border-radius:10px; display:none;"></audio> 
+    </section> 
+  
+    <script> 
+    let currentArtist = 0; 
+    let artists = []; 
+    let autoSlide; 
+  
+    async function loadTopArtists() { 
+      try { 
+        const response = await fetch('/api/top_artists'); 
+        artists = await response.json(); 
+        if (artists.length === 0) return; 
+  
+        displayArtist(0); 
+        startAutoSlide(); 
+      } catch (err) { 
+        console.error('Error loading top artists:', err); 
+      } 
+    } 
+  
+    function displayArtist(index) { 
+      const artist = artists[index]; 
+      const name = document.getElementById('artist-name'); 
+      const stats = document.getElementById('artist-stats'); 
+      const img = document.getElementById('artist-image'); 
+      const audio = document.getElementById('artist-audio'); 
+      const playBtn = document.getElementById('play-top-track'); 
+      const section = document.getElementById('artist-spotlight'); 
+      const dots = document.querySelectorAll('.dot'); 
+  
+      const moodColors = { 
+        'Happy': 'linear-gradient(135deg, #ffcc00, #ff6699)', 
+        'Sad': 'linear-gradient(135deg, #3a4eff, #6fc3ff)', 
+        'Anger': 'linear-gradient(135deg, #ff2b2b, #7a0000)', 
+        'Chill': 'linear-gradient(135deg, #00ffaa, #008080)', 
+        'Love': 'linear-gradient(135deg, #ff66cc, #ff3366)', 
+        'Unknown': 'linear-gradient(135deg, #444, #777)' 
+      }; 
+  
+      section.style.background = moodColors[artist.mood] || moodColors['Unknown']; 
+      img.style.opacity = 0; 
+      setTimeout(() => { 
+        name.textContent = artist.name; 
+        img.src = `/static/${artist.image}`; 
+        stats.textContent = `🎧 ${artist.listeners} listeners • 💿 ${artist.top_song} (${artist.plays} plays) • Mood: ${artist.mood}`; 
+        img.style.opacity = 1; 
+      }, 300); 
+  
+      playBtn.onclick = () => { 
+        if (!artist.audio_file) return; 
+        audio.src = `/static/${artist.audio_file}`; 
+        audio.style.display = 'block'; 
+        audio.play(); 
+        img.style.transform = 'scale(1.05)'; 
+        img.style.boxShadow = '0 0 50px rgba(255,255,255,0.5)'; 
+      }; 
+  
+      dots.forEach((dot, i) => dot.style.background = i === index ? '#9b4de0' : '#444'); 
+      currentArtist = index; 
+    } 
+  
+    function nextArtist() { 
+      currentArtist = (currentArtist + 1) % artists.length; 
+      displayArtist(currentArtist); 
+    } 
+    function prevArtist() { 
+      currentArtist = (currentArtist - 1 + artists.length) % artists.length; 
+      displayArtist(currentArtist); 
+    } 
+  
+    function startAutoSlide() { 
+      clearInterval(autoSlide); 
+      autoSlide = setInterval(nextArtist, 7000); 
+    } 
+  
+    document.getElementById('prev-artist').addEventListener('click', () => { 
+      prevArtist(); 
+      startAutoSlide(); 
+    });
 
-    <!-- ✅ Popular Tracks -->
-    <section class="popular-tracks">
-        <h2>Popular</h2>
-        <div class="track-list">
+    document.getElementById('next-artist').addEventListener('click', () => { 
+      nextArtist(); 
+      startAutoSlide(); 
+    });
 
-            <div class="track-item">
-                <span class="track-number">1</span>
-                <img src="{{ url_for('static', filename='RIO ROMO - NOTHING\'S NEW.jpg') }}" alt="Track Image" class="track-image">
-                <div class="track-info">
-                    <div class="track-title">RIO ROMO - NOTHING'S NEW <span class="verified-icon">✓</span></div>
-                    <div class="track-plays">Sad • 3:28</div>
-                </div>
-                <button class="sad caption" onclick="window.location.href='{{ url_for('library') }}#sad-section'"><span>Sad</span></button>
-            </div>
+    document.addEventListener('DOMContentLoaded', loadTopArtists);
+    </script>
 
-            <div class="track-item">
-                <span class="track-number">2</span>
-                <img src="{{ url_for('static', filename='Shawn Mendes, Camilia Cbello - Senorita.jpg') }}" alt="Track Image" class="track-image">
-                <div class="track-info">
-                    <div class="track-title">Shawn Mendes, Camilia Cbello - Senorita <span class="verified-icon">✓</span></div>
-                    <div class="track-plays">Love • 3:11</div>
-                </div>
-                <button class="love caption" onclick="window.location.href='{{ url_for('library') }}#love-section'"><span>Love</span></button>
-            </div>
 
-            <div class="track-item">
-                <span class="track-number">3</span>
-                <img src="{{ url_for('static', filename='Vancouver Sleep Clinic - somone to stay.jpg') }}" alt="Track Image" class="track-image">
-                <div class="track-info">
-                    <div class="track-title">Vancouver Sleep Clinic - someone to stay <span class="verified-icon">✓</span></div>
-                    <div class="track-plays">Sad • 4:14</div>
-                </div>
-                <button class="sad caption" onclick="window.location.href='{{ url_for('library') }}#sad-section'"><span>Sad</span></button>
-            </div>
-
-            <div class="track-item">
-                <span class="track-number">4</span>
-                <img src="{{ url_for('static', filename='Lana Del Rey - Say Yes To Heaven.jpg') }}" alt="Track Image" class="track-image">
-                <div class="track-info">
-                    <div class="track-title">Lana Del Rey - Say Yes To Heaven <span class="verified-icon">✓</span></div>
-                    <div class="track-plays">Relaxed • 3:29</div>
-                </div>
-                <button class="relaxed caption" onclick="window.location.href='{{ url_for('library') }}#relaxed-section'"><span>Relaxed</span></button>
-            </div>
-
-            <div class="track-item">
-                <span class="track-number">5</span>
-                <img src="{{ url_for('static', filename='Surfaces - Sheesh!.jpg') }}" alt="Track Image" class="track-image">
-                <div class="track-info">
-                    <div class="track-title">Surfaces - Sheesh! <span class="verified-icon">✓</span></div>
-                    <div class="track-plays">Happy • 2:28</div>
-                </div>
-                <button class="happy caption" onclick="window.location.href='{{ url_for('library') }}#happy-section'"><span>Happy</span></button>
-            </div>
-
-            <div class="track-item">
-                <span class="track-number">6</span>
-                <img src="{{ url_for('static', filename='Lizzo - Thuth Hurts.jpg') }}" alt="Track Image" class="track-image">
-                <div class="track-info">
-                    <div class="track-title">Lizzo - Thuth Hurts <span class="verified-icon">✓</span></div>
-                    <div class="track-plays">Anger • 2:53</div>
-                </div>
-                <button class="anger caption" onclick="window.location.href='{{ url_for('library') }}#anger-section'"><span>Anger</span></button>
-            </div>
-
-        </div>
-    </section>
 
     <!-- ✅ Mood Selection -->
     <section class="mood-selection">
@@ -514,10 +640,13 @@
             <div class="mood-item">
                 <img class="hero-image" src="{{ url_for('static', filename='de18fedc3a18ae111943cf36fdc8967a.jpg') }}" alt="Relaxing Music">
                 <button class="relaxed caption" onclick="window.location.href='{{ url_for('library') }}#relaxed-section'"><span>Relaxed</span></button>
+
+
             </div>
             <div class="mood-item">
                 <img class="hero-image" src="{{ url_for('static', filename='e63565dc2d6b82b162e3a17329614181.jpg') }}" alt="Love Music">
                 <button class="love caption" onclick="window.location.href='{{ url_for('library') }}#love-section'"><span>Love</span></button>
+
             </div>
             <div class="mood-item">
                 <img class="hero-image" src="{{ url_for('static', filename='1891b3fd114cdf8f93af4633958ed49c.jpg') }}" alt="Sad Music">
@@ -526,42 +655,231 @@
             <div class="mood-item">
                 <img class="hero-image" src="{{ url_for('static', filename='4000059775ba77e492ce3ae907e825cd.jpg') }}" alt="Anger Music">
                 <button class="anger caption" onclick="window.location.href='{{ url_for('library') }}#anger-section'"><span>Anger</span></button>
+
             </div>
         </div>
     </section>
 
-    <!-- ✅ Recently Played -->
-<section class="recently-played"
-    style="padding: 40px 24px; background: rgba(24, 24, 24, 0.7); margin: 30px 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);">
+<!-- ✅ Dynamic Popular Tracks -->
+<section class="popular-tracks">
+     <h2>🏆 Top 15 Popular Tracks</h2>
+     <div id="popular-list" class="track-list"></div>
+ 
+     <!-- Player stays the same -->
+     <div id="player-container" style="margin-top:20px; display:none;">
+         <h3 id="now-playing" style="margin-bottom:10px;">Now Playing:</h3>
+         <audio id="popular-player" controls style="width:100%; border-radius:10px;"></audio>
+     </div>
+ </section>
 
-    <h2 style="margin-bottom: 30px; font-size: 1.8em; text-align: left;">Recently Played</h2>
+<script>
+ async function recordPlay(songId) {
+   try {
+     await fetch('/api/track_play', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ song_id: songId })
+     });
+   } catch (err) {
+     console.error('Error recording play:', err);
+   }
+ }
 
-    <div style="max-height: 600px; overflow-y: auto; padding-right: 10px; scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #d466ff rgba(0,0,0,0.2);">
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-            {% for track in recently_played %}
-            <div class="music-player"
-                style="display:flex;flex-direction:column;align-items:flex-start;padding:12px 15px;background:rgba(0,0,0,0.4);border-radius:8px;transition:background 0.2s;"
-                onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                onmouseout="this.style.background='rgba(0,0,0,0.4)'">
+ function getTrendLabel(trend) {
+   switch (trend) {
+     case 'up': return `<span class="trend-up">🔼</span>`;
+     case 'down': return `<span class="trend-down">🔽</span>`;
+     case 'new': return `<span class="trend-new">🆕</span>`;
+     default: return `<span class="trend-same">⏺️</span>`;
+   }
+ }
 
-                <!-- Song info -->
-                <div style="display:flex;flex-direction:column;text-align:left;width:100%;">
-                    <h3 style="font-size:16px;color:white;margin:0;">{{ track['artist'] }} - {{ track['song_title'] }}</h3>
-                    <p style="font-size:13px;color:#b3b3b3;margin-top:4px;">
-                        {{ track['mood'] if track['mood'] is defined else 'Mixed' }} •
-                        {{ track['duration'] if track['duration'] is defined else '3:30' }}
-                    </p>
-                </div>
+ function playTrack(file, title, artist, songId) {
+   const player = document.getElementById('popular-player');
+   const container = document.getElementById('player-container');
+   const nowPlaying = document.getElementById('now-playing');
 
-                <!-- Audio player below the text -->
-                <audio controls style="width:100%;height:28px;margin-top:8px;">
-                    <source src="{{ url_for('static', filename=track['audio_file']) }}" type="audio/mpeg">
-                </audio>
+   player.src = file;
+   nowPlaying.textContent = `Now Playing: ${artist} - ${title}`;
+   container.style.display = 'block';
+   player.play();
+   container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+   recordPlay(songId);
+ }
+
+ async function loadPopular() {
+   try {
+     const response = await fetch('/api/popular');
+     const tracks = await response.json();
+     // Expose tracks globally for inline handlers
+     window.popularTracks = tracks;
+     const list = document.getElementById('popular-list');
+     list.innerHTML = '';
+
+     if (tracks.length === 0) {
+       list.innerHTML = `<p style="color:#ccc;">No popular songs available right now.</p>`;
+       return;
+     }
+
+     tracks.forEach((track, index) => {
+       const moodClass = track.mood ? track.mood.toLowerCase() : 'neutral';
+       const trendLabel = getTrendLabel(track.trend);
+
+       const item = `
+         <div class="music-player" style="display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(0,0,0,0.5);border-radius:8px;padding:10px;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+           <img src="${encodeURI('/static/' + track.image)}" alt="${track.title}" style="width:220px;height:220px;object-fit:cover;border-radius:10px;" />
+           <div style="margin-top:10px;">
+             <div style="font-weight:600;">${track.artist} - ${track.title} ${trendLabel} <span style="margin-left:6px;color:#ccc;">#${track.rank}</span></div>
+             <div style="color:#bbb;font-size:0.9rem;">Plays: ${track.play_count} • ${track.mood} ${track.duration ? '• ' + track.duration : ''}</div>
+           </div>
+           <audio controls style="width:100%;margin-top:10px;border-radius:10px;" onplay="handlePopularPlay(${index})"><source src="${encodeURI('/static/' + track.audio_file)}" type="audio/mpeg"></audio>
+         </div>`;
+       list.insertAdjacentHTML('beforeend', item);
+     });
+   } catch (err) {
+     console.error('Error loading popular songs:', err);
+   }
+ }
+
+ async function handlePopularPlay(i) {
+    try {
+      const t = (window.popularTracks || [])[i];
+      if (!t) return;
+      // Record the play in play_history
+      recordPlay(t.id);
+    } catch (err) {
+      console.error('Error handling popular play:', err);
+    }
+  }
+
+document.addEventListener('DOMContentLoaded', loadPopular);
+setInterval(loadPopular, 60000);
+</script>
+
+    <!-- Insert recently played section here -->
+    <section id="recently-played-section" style="padding:28px;margin:20px;border-radius:10px;background:rgba(0,0,0,0.5);">
+      <h2 style="margin-bottom:12px;">⏱️ Recently Played</h2>
+      <div id="recently-played-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-height:70vh;overflow-y:auto;padding-right:6px;"></div>
+    </section>
+
+    <script>
+    (function () {
+      const grid = document.getElementById('recently-played-grid');
+
+      async function fetchRecentlyPlayed() {
+        try {
+          const res = await fetch('/api/recently_played', { cache: 'no-store' });
+          if (!res.ok) return;
+          const data = await res.json();
+          renderGrid(data || []);
+        } catch (err) {
+          console.error('Failed to fetch recently played:', err);
+        }
+      }
+
+      function renderGrid(items) {
+        if (!grid) return;
+        grid.innerHTML = '';
+        if (!items.length) {
+          grid.innerHTML = `<div style="color:#ccc; grid-column:1/-1;">No recently played songs yet.</div>`;
+          return;
+        }
+
+        items.forEach(item => {
+          const image = item.image ? (`/static/${item.image}`) : '/static/defultimage.jpg';
+          const audioSrc = item.audio_file ? `/static/${item.audio_file}` : '';
+          const title = item.title || 'Unknown';
+          const artist = item.artist || 'Unknown';
+          const mood = item.mood || '';
+          const playedAt = item.played_at ? new Date(item.played_at).toLocaleString() : '';
+
+          const card = document.createElement('div');
+          card.className = 'music-player';
+          card.style = "display:flex;flex-direction:column;padding:10px;background:rgba(0,0,0,0.5);border-radius:8px;transition:transform 0.2s;";
+          card.setAttribute('onmouseover', "this.style.transform='scale(1.02)'");
+          card.setAttribute('onmouseout', "this.style.transform='scale(1)'");
+          card.innerHTML = `
+            <img src="${image}" alt="Album Cover" style="border-radius:5px;width:50%;margin:auto;margin-bottom:10px;">
+            <div style="text-align:left;">
+                <h3 style="font-size:14px;color:white;margin:0;">${artist} - ${title}</h3>
+                <p style="font-size:12px;color:#b3b3b3;margin:2px 0 5px;">${mood || ''}${playedAt ? ' • ' + playedAt : ''}</p>
+                ${ audioSrc ? `<audio controls style="width:100%;height:30px;"><source src="${audioSrc}" type="audio/mpeg"></audio>` : ''}
             </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
+          `;
+          grid.appendChild(card);
+        });
+
+        // attach play listeners so plays inside the recently grid also record (if audio exists)
+        grid.querySelectorAll('audio').forEach(a => {
+          a.removeEventListener('play', onLocalPlay);
+          a.addEventListener('play', onLocalPlay);
+        });
+      }
+
+      // When one of these audio tags is played, call /play_song to update timestamp and broadcast update
+      async function onLocalPlay(e) {
+        const a = e.currentTarget;
+        const card = a.closest('.music-player');
+        if (!card) return;
+
+        const img = card.querySelector('img');
+        const metaTitle = card.querySelector('h3')?.innerText || '';
+        // parse artist and title from string "Artist - Title"
+        let artist = 'Unknown', title = metaTitle;
+        if (metaTitle.includes('-')) {
+          const parts = metaTitle.split('-').map(s => s.trim());
+          artist = parts[0] || artist;
+          title = parts[1] || title;
+        }
+
+        const audioSrc = a.querySelector('source')?.getAttribute('src') || '';
+        const audioFile = audioSrc.split('/').pop() || '';
+        const albumCover = img ? (img.getAttribute('src').split('/').pop() || '') : '';
+
+        try {
+          const resp = await fetch('/play_song', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: title,
+              artist: artist,
+              image: albumCover,
+              audio_file: audioFile,
+              mood: ''
+            })
+          });
+          if (resp.ok) {
+            // broadcast to other tabs
+            try { new BroadcastChannel('mood-events').postMessage({ type: 'song_played', t: Date.now() }); } catch (e) {}
+            try { localStorage.setItem('mood_song_played', String(Date.now())); } catch(e) {}
+            // refresh this grid (move the song to top)
+            fetchRecentlyPlayed();
+          }
+        } catch (err) {
+          console.error('Error logging local play', err);
+        }
+      }
+
+      // Setup inter-tab listeners so home/profile update immediately when a play occurs elsewhere
+      try {
+        const ch = new BroadcastChannel('mood-events');
+        ch.onmessage = (e) => {
+          if (e && e.data && e.data.type === 'song_played') fetchRecentlyPlayed();
+        };
+      } catch (err) { /* BroadcastChannel not supported */ }
+
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'mood_song_played') fetchRecentlyPlayed();
+      });
+
+      // initial load + periodic refresh
+      fetchRecentlyPlayed();
+      setInterval(fetchRecentlyPlayed, 60_000); // every 60s
+    })();
+    </script>
+
+    
 
 
     <!-- ✅ About Section -->
