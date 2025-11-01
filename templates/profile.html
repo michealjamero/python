@@ -500,8 +500,8 @@
 <section class="artist-profile" style="padding: 100px 24px 24px; background: rgba(0,0,0,0.5); border-radius: 12px; margin-bottom: 30px;">
     <div class="artist-header" style="display:flex; gap:20px; align-items:center;">
         <!-- Profile Image -->
-        <img src="{{ url_for('static', filename=('Untitled design (1).png' if (not profile['image'] or profile['image'] in ['artist_profile.jpg','defultimage.jpg']) else profile['image'])) }}" alt="Artist Profile" class="artist-image"
-             style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:2px solid #d466ff;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='Untitled design (1).png') }}';">
+        <img src="{{ url_for('static', filename=('defultimage.jpg' if (not profile['image'] or profile['image'] in ['artist_profile.jpg','Untitled design (1).png','defultimage.jpg']) else profile['image'])) }}" alt="Artist Profile" class="artist-image"
+             style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:2px solid #d466ff;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='defultimage.jpg') }}';">
 
 
         <div class="artist-info" style="flex:1;">
@@ -772,6 +772,17 @@
         let activeMoods = new Set(['Happy','Sad','Relaxed','Angry','Love']);
 
         // === Utility Functions ===
+        function getTodayData(data) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`;
+            let day = Array.isArray(data) ? data.find(d => d.date === todayStr) : null;
+            if (!day && Array.isArray(data) && data.length) day = data[data.length - 1];
+            return day || { Happy: 0, Sad: 0, Relaxed: 0, Angry: 0, Love: 0 };
+        }
+
         function updateKPIs(data) {
             const moods = ['Happy','Sad','Relaxed','Angry','Love'];
             const totals = {};
@@ -785,11 +796,17 @@
             document.getElementById('kpiTopMood').textContent = topMood || '—';
             document.getElementById('kpiUnique').textContent = `${uniqueMoods}/5`;
 
-            // Donut Center
-            if (donutChart && grandTotal > 0) {
-                const pct = Math.round((totals[topMood] / grandTotal) * 100);
+            // Donut Center (reset daily using only today's data)
+            const todayData = getTodayData(data);
+            const todayTotal = moods.reduce((sum, m) => sum + (todayData[m] || 0), 0);
+            const topMoodToday = moods.sort((a,b) => (todayData[b] || 0) - (todayData[a] || 0))[0];
+            if (donutChart && todayTotal > 0) {
+                const pct = Math.round(((todayData[topMoodToday] || 0) / todayTotal) * 100);
                 document.getElementById('donutPct').textContent = pct + '%';
-                document.getElementById('donutLabel').textContent = topMood;
+                document.getElementById('donutLabel').textContent = topMoodToday;
+            } else {
+                document.getElementById('donutPct').textContent = '0%';
+                document.getElementById('donutLabel').textContent = 'Mood';
             }
         }
 
@@ -864,12 +881,10 @@
 
         function renderDonutChart(data) {
             const moods = ['Happy','Sad','Relaxed','Angry','Love'];
-            const totals = {};
-            moods.forEach(m => totals[m] = data.reduce((sum, d) => sum + (d[m] || 0), 0));
-
-            const labels = Object.keys(totals).filter(k => totals[k] > 0);
-            const values = labels.map(k => totals[k]);
-            const bgColors = labels.map(k => colors[k]);
+            const todayData = getTodayData(data);
+            const labels = moods.filter(m => (todayData[m] || 0) > 0);
+            const values = labels.map(m => todayData[m] || 0);
+            const bgColors = labels.map(m => colors[m]);
 
             if (donutChart) donutChart.destroy();
             donutChart = new Chart(ctxDonut, {
@@ -1010,6 +1025,7 @@
             <div id="mcDetailDate" style="font-weight:700;color:#fff;margin-bottom:6px;">Select a day</div>
             <div id="mcDetailMood" style="margin-bottom:4px;">—</div>
             <div id="mcDetailCount" style="font-size:13px;color:#9ea0a6;">Plays: —</div>
+            <div id="mcDetailExamples" style="margin-top:6px;font-size:12px;color:#b3b3b3;">Examples: —</div>
           </div>
         </div>
       </div>
@@ -1030,6 +1046,7 @@
       const detailDate = document.getElementById('mcDetailDate');
       const detailMood = document.getElementById('mcDetailMood');
       const detailCount = document.getElementById('mcDetailCount');
+      const detailExamples = document.getElementById('mcDetailExamples');
       const prevBtn = document.getElementById('mcPrev');
       const nextBtn = document.getElementById('mcNext');
 
@@ -1051,6 +1068,7 @@
         detailDate.textContent = 'Select a day';
         detailMood.textContent = '—';
         detailCount.textContent = 'Plays: —';
+        if (detailExamples) detailExamples.textContent = 'Examples: —';
       }
 
       function renderEmptyDay(el, dayNum) {
@@ -1122,14 +1140,24 @@
             renderEmptyDay(cell, d);
           }
 
-          // tooltip / hover
-          cell.title = dayObj.mood ? `${dayObj.mood} • Plays: ${dayObj.count}` : `No mood data • ${dateStr}`;
+          // tooltip / hover (include examples when available)
+          if (dayObj.mood) {
+            const ex = (moodExamples[dayObj.mood] || []).slice(0, 2).join(', ');
+            const examplesStr = ex ? ` • Examples: ${ex}` : '';
+            cell.title = `${dayObj.mood} • Plays: ${dayObj.count}${examplesStr}`;
+          } else {
+            cell.title = `No mood data • ${dateStr}`;
+          }
 
           // click/hover show detail on right column
           cell.addEventListener('click', () => {
             detailDate.textContent = new Date(dateStr).toLocaleDateString();
             detailMood.textContent = dayObj.mood ? `Mood: ${dayObj.mood}` : 'Mood: —';
             detailCount.textContent = `Plays: ${dayObj.count || 0}`;
+            if (detailExamples) {
+              const ex = dayObj.mood ? moodExamples[dayObj.mood] || [] : [];
+              detailExamples.textContent = ex.length ? `Examples: ${ex.join(', ')}` : 'Examples: —';
+            }
           });
 
           cell.addEventListener('mouseover', () => {
@@ -1264,3 +1292,31 @@
     </script>
 </body>
 </html>
+      // Example songs per mood (static suggestions)
+      const moodExamples = {
+        Happy: [
+          'Pharrell Williams - Happy',
+          "OneRepublic - I Ain't Worried",
+          'BØRNS - Electric Love'
+        ],
+        Sad: [
+          'Conan Gray - Heather',
+          "Billie Eilish - Halley\'s Comet",
+          'Tom Odell - Another Love'
+        ],
+        Relaxed: [
+          'Clairo - Bubble Gum',
+          'Laufey - From The Start',
+          'Mecah Edwards - Moments'
+        ],
+        Angry: [
+          'grandson - Blood // Water',
+          'Bohnes - Middle Finger',
+          'Little Simz - Venom'
+        ],
+        Love: [
+          'John Legend - All Of Me',
+          'Ed Sheeran - Perfect',
+          'Taylor Swift - All Too Well'
+        ]
+      };

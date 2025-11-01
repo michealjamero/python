@@ -229,7 +229,7 @@ def profile():
         mood_counts = conn.execute('''
             SELECT mood, COUNT(*) as count
             FROM recently_played
-            WHERE user_id=? AND date(played_at) = date(?)
+            WHERE user_id=? AND date(played_at, 'localtime') = date(?)
             GROUP BY mood
         ''', (session['user_id'], day.strftime('%Y-%m-%d'))).fetchall()
 
@@ -376,7 +376,7 @@ def logout():
 
 # ==================== ADD SONG + MOOD ====================
 
-# Recently Played play_song route removed
+# play_song route is implemented below (around line 1069)
 
 # ==================== ADMIN ROUTES ====================
 
@@ -689,10 +689,10 @@ def api_mood_calendar():
     # Query counts grouped by date and mood
     # Note: date(played_at) is used so it works with timestamps
     rows = cur.execute('''
-        SELECT date(played_at) AS d, mood, COUNT(*) as cnt
+        SELECT date(played_at, 'localtime') AS d, mood, COUNT(*) as cnt
         FROM recently_played
         WHERE user_id = ?
-          AND date(played_at) BETWEEN date(?) AND date(?)
+          AND date(played_at, 'localtime') BETWEEN date(?) AND date(?)
         GROUP BY d, mood
     ''', (session['user_id'], first_day.strftime('%Y-%m-%d'), last_day.strftime('%Y-%m-%d'))).fetchall()
 
